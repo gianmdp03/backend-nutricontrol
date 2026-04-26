@@ -1,5 +1,5 @@
 package com.erick.nutricontrol._enum;
 
-public enum Status {
+public enum AppointmentStatus {
     CONFIRMED, CANCELED, PENDING, COMPLETED
 }
