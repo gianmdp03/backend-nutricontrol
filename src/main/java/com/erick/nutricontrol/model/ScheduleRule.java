@@ -11,30 +11,33 @@ import java.time.LocalTime;
 @Entity
 @Getter
 @Setter
-@Table(name = "schedule_rule")
+@Table(
+    name = "schedule_rule",
+    uniqueConstraints = {@UniqueConstraint(columnNames = {"dayOfWeek", "startTime"})})
 @NoArgsConstructor
 public class ScheduleRule {
-    @Id
-    @GeneratedValue
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @Enumerated(EnumType.STRING)
-    @Column(length = 20, nullable = false)
-    private DayOfWeek dayOfWeek;
+  @Enumerated(EnumType.STRING)
+  @Column(length = 20, nullable = false)
+  private DayOfWeek dayOfWeek;
 
-    @Column(nullable = false)
-    private LocalTime startTime;
+  @Column(nullable = false)
+  private LocalTime startTime;
 
-    @Column(nullable = false)
-    private LocalTime endTime;
+  @Column(nullable = false)
+  private LocalTime endTime;
 
-    @Column(nullable = false)
-    private Integer durationMinutes;
+  @Column(nullable = false)
+  private Integer durationMinutes;
 
-    public ScheduleRule(DayOfWeek dayOfWeek, LocalTime startTime, LocalTime endTime, Integer durationMinutes) {
-        this.dayOfWeek = dayOfWeek;
-        this.startTime = startTime;
-        this.endTime = endTime;
-        this.durationMinutes = durationMinutes;
-    }
+  public ScheduleRule(
+      DayOfWeek dayOfWeek, LocalTime startTime, LocalTime endTime, Integer durationMinutes) {
+    this.dayOfWeek = dayOfWeek;
+    this.startTime = startTime;
+    this.endTime = endTime;
+    this.durationMinutes = durationMinutes;
+  }
 }
