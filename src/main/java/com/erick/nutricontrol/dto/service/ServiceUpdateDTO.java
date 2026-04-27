@@ -1,4 +1,6 @@
 package com.erick.nutricontrol.dto.service;
 
-public record ServiceUpdateDTO() {
+import java.math.BigDecimal;
+
+public record ServiceUpdateDTO(String name, String description, BigDecimal price, Boolean available) {
 }
