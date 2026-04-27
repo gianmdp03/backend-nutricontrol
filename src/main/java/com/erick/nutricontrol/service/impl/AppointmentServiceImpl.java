@@ -44,22 +44,28 @@ public class AppointmentServiceImpl implements AppointmentService {
     @Value("${nutricontrol.appointments.minutes-gap}")
     private Integer minutesGap;
 
+    @Value("${nutricontrol.appointments.duration-minutes}")
+    private Integer durationMinutes;
+
     @Override
     @Transactional
     public AppointmentDetailDTO addAppointment(String username, AppointmentRequestDTO dto) {
         User user = userRepository.findByUsername(username).orElseThrow(() -> new NotFoundException("User not found"));
         User admin = userRepository.findById(dto.adminId()).orElseThrow(() -> new NotFoundException("Admin not found"));
+        LocalTime calculatedEndTime = dto.startTime().plusMinutes(this.durationMinutes);
+
         Map<LocalDate, List<LocalTime>> availableSlots = getAvailableAppointments();
         List<LocalTime> slotsForRequestedDate = availableSlots.getOrDefault(dto.date(), Collections.emptyList());
 
         if (!slotsForRequestedDate.contains(dto.startTime())) {
-            throw new BadRequestException("Appointment not available");
+            throw new BadRequestException("El turno seleccionado ya no está disponible o está fuera de horario.");
         }
-
         Appointment appointment = mapper.toEntity(dto);
+        appointment.setEndTime(calculatedEndTime);
         appointment.setAppointmentStatus(AppointmentStatus.PENDING);
         appointment.setUser(user);
         appointment.setAdmin(admin);
+
         appointment = repository.save(appointment);
 
         return mapper.toDetailDTO(appointment);

@@ -8,6 +8,5 @@ import java.time.LocalTime;
 
 public record AppointmentRequestDTO(
     @NotNull @FutureOrPresent LocalDate date,
-    @NotNull @FutureOrPresent LocalTime startTime,
-    @NotNull @FutureOrPresent LocalTime endTime,
+    @NotNull LocalTime startTime,
     @NotNull Long adminId) {}
