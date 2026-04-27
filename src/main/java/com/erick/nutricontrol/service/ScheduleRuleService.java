@@ -8,7 +8,7 @@ import org.springframework.data.domain.Pageable;
 
 public interface ScheduleRuleService {
     ScheduleRuleDetailDTO addScheduleRule(ScheduleRuleRequestDTO dto);
-    Page<ScheduleRuleDetailDTO> listScheduleRule(Pageable pageable);
+    Page<ScheduleRuleDetailDTO> listScheduleRules(Pageable pageable);
     ScheduleRuleDetailDTO getScheduleRuleById(Long id);
     ScheduleRuleDetailDTO updateScheduleRule(Long id, ScheduleRuleUpdateDTO dto);
     void deleteScheduleRuleById(Long id);

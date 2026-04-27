@@ -44,7 +44,7 @@ public class ScheduleRuleServiceImpl implements ScheduleRuleService {
   }
 
   @Override
-  public Page<ScheduleRuleDetailDTO> listScheduleRule(Pageable pageable) {
+  public Page<ScheduleRuleDetailDTO> listScheduleRules(Pageable pageable) {
     Page<ScheduleRule> list = repository.findAll(pageable);
     if (list.isEmpty()) {
       return Page.empty();
