@@ -26,7 +26,7 @@ public class AuthenticationController {
     private final AuthenticationService authenticationService;
 
     @PostMapping("/register")
-    public ResponseEntity<UserDetailDTO> register(@RequestBody UserRequestDTO request) {
+    public ResponseEntity<UserDetailDTO> register(@Valid @RequestBody UserRequestDTO request) {
         AuthenticationResponseDTO authResponse = authenticationService.register(request);
         ResponseCookie cookie = createAccessTokenCookie(authResponse.token());
 
@@ -36,7 +36,7 @@ public class AuthenticationController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<UserDetailDTO> authenticate(@RequestBody AuthenticationRequestDTO request) {
+    public ResponseEntity<UserDetailDTO> authenticate(@Valid @RequestBody AuthenticationRequestDTO request) {
         AuthenticationResponseDTO authResponse = authenticationService.authenticate(request);
         ResponseCookie cookie = createAccessTokenCookie(authResponse.token());
 
