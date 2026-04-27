@@ -4,6 +4,7 @@ import com.erick.nutricontrol.security.user.Enum.Role;
 import com.erick.nutricontrol.security.user.model.User;
 import com.erick.nutricontrol.security.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,17 +15,32 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 public class DataSeeder {
     private final UserRepository userRepository;
 
+    @Value("${nutricontrol.initial-user.name}")
+    private String name;
+
+    @Value("${nutricontrol.initial-user.lastname}")
+    private String lastname;
+
+    @Value("${nutricontrol.initial-user.email}")
+    private String email;
+
+    @Value("${nutricontrol.initial-user.username}")
+    private String username;
+
+    @Value("${nutricontrol.initial-user.password}")
+    private String password;
+
     @Bean
     CommandLineRunner initDatabase(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         return args -> {
-            String adminEmail = "admin@admin.com";
+            String adminEmail = email;
 
             userRepository.findByEmail(adminEmail).ifPresentOrElse(
                     (existingAdmin) -> {
-                        existingAdmin.setName("Zully");
-                        existingAdmin.setLastname("Cepeda");
-                        existingAdmin.setUsername("zcepeda");
-                        existingAdmin.setPassword(passwordEncoder.encode("123456"));
+                        existingAdmin.setName(name);
+                        existingAdmin.setLastname(lastname);
+                        existingAdmin.setUsername(username);
+                        existingAdmin.setPassword(passwordEncoder.encode(password));
                         existingAdmin.setRole(Role.ROLE_ADMIN);
 
                         userRepository.save(existingAdmin);
@@ -33,10 +49,10 @@ public class DataSeeder {
                     () -> {
                         User admin = new User();
                         admin.setEmail(adminEmail);
-                        admin.setName("Zully");
-                        admin.setLastname("Cepeda");
-                        admin.setUsername("zcepeda");
-                        admin.setPassword(passwordEncoder.encode("123456"));
+                        admin.setName(name);
+                        admin.setLastname(lastname);
+                        admin.setUsername(username);
+                        admin.setPassword(passwordEncoder.encode(password));
                         admin.setRole(Role.ROLE_ADMIN);
 
                         userRepository.save(admin);
