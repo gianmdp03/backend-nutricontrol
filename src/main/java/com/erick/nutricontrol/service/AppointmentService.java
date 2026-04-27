@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Map;
 
 public interface AppointmentService{
-    AppointmentDetailDTO addAppointment(AppointmentRequestDTO dto);
+    AppointmentDetailDTO addAppointment(String username, AppointmentRequestDTO dto);
     Map<LocalDate, List<LocalTime>> getAvailableAppointments(Integer days, Integer minutesGap);
     Page<AppointmentListDTO> listUserAppointments(Authentication authentication, Pageable pageable);
     Page<AppointmentListDTO> listAdminAppointments(Authentication authentication, Pageable pageable);

@@ -16,6 +16,6 @@ import java.util.List;
 public interface AppointmentRepository extends JpaRepository<Appointment, Long> {
     List<Appointment> findByDateBetween(LocalDate startDate, LocalDate endDate);
     boolean existsByDateAndStartTimeAndAppointmentStatusNot(LocalDate startDate, LocalTime startTime, AppointmentStatus appointmentStatus);
-    Page<Appointment> findByAdminId(Long adminId, Pageable pageable);
+    Page<Appointment> findByAdmin(User admin, Pageable pageable);
     Page<Appointment> findByUser(User user, Pageable pageable);
 }

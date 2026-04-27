@@ -33,17 +33,20 @@ public class Appointment {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(nullable = false)
-    private Long adminId;
+    @ManyToOne
+    @JoinColumn(name = "admin_id", nullable = false)
+    private User admin;
 
     @Column(length = 20, nullable = false)
     @Enumerated(EnumType.STRING)
     private AppointmentStatus appointmentStatus;
 
-    public Appointment(LocalDate date, LocalTime startTime, LocalTime endTime, AppointmentStatus appointmentStatus) {
+    public Appointment(LocalDate date, LocalTime startTime, LocalTime endTime, User user, User admin, AppointmentStatus appointmentStatus) {
         this.date = date;
         this.startTime = startTime;
         this.endTime = endTime;
+        this.user = user;
+        this.admin = admin;
         this.appointmentStatus = appointmentStatus;
     }
 }

@@ -41,7 +41,9 @@ public class AppointmentServiceImpl implements AppointmentService {
 
     @Override
     @Transactional
-    public AppointmentDetailDTO addAppointment(AppointmentRequestDTO dto) {
+    public AppointmentDetailDTO addAppointment(String username, AppointmentRequestDTO dto) {
+        User user = userRepository.findByUsername(username).orElseThrow(() -> new NotFoundException("User not found"));
+        User admin = userRepository.findById(dto.adminId()).orElseThrow(() -> new NotFoundException("Admin not found"));
         boolean isTaken = repository.existsByDateAndStartTimeAndAppointmentStatusNot(
                 dto.date(),
                 dto.startTime(),
@@ -59,6 +61,8 @@ public class AppointmentServiceImpl implements AppointmentService {
 
         Appointment appointment = mapper.toEntity(dto);
         appointment.setAppointmentStatus(AppointmentStatus.PENDING);
+        appointment.setUser(user);
+        appointment.setAdmin(admin);
         appointment = repository.save(appointment);
 
         return mapper.toDetailDTO(appointment);
@@ -143,8 +147,8 @@ public class AppointmentServiceImpl implements AppointmentService {
     @Override
     public Page<AppointmentListDTO> listAdminAppointments(Authentication authentication, Pageable pageable){
         String username = authentication.getName();
-        User user = userRepository.findByUsername(username).orElseThrow(()-> new NotFoundException("User not found"));
-        Page<Appointment> page = repository.findByAdminId(user.getId(), pageable);
+        User admin = userRepository.findByUsername(username).orElseThrow(()-> new NotFoundException("User not found"));
+        Page<Appointment> page = repository.findByAdmin(admin, pageable);
         if(page.isEmpty()){
             return Page.empty();
         }
