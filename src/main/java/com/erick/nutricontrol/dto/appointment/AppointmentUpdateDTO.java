@@ -1,4 +1,5 @@
 package com.erick.nutricontrol.dto.appointment;
 
-public record AppointmentUpdateDTO() {
-}
+import java.time.LocalDateTime;
+
+public record AppointmentUpdateDTO(LocalDateTime date) {}
