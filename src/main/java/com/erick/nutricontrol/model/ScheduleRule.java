@@ -30,14 +30,10 @@ public class ScheduleRule {
   @Column(nullable = false)
   private LocalTime endTime;
 
-  @Column(nullable = false)
-  private Integer durationMinutes;
-
   public ScheduleRule(
-      DayOfWeek dayOfWeek, LocalTime startTime, LocalTime endTime, Integer durationMinutes) {
+      DayOfWeek dayOfWeek, LocalTime startTime, LocalTime endTime) {
     this.dayOfWeek = dayOfWeek;
     this.startTime = startTime;
     this.endTime = endTime;
-    this.durationMinutes = durationMinutes;
   }
 }
