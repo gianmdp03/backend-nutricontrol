@@ -2,7 +2,6 @@ package com.erick.nutricontrol.service.impl;
 
 import com.erick.nutricontrol._enum.AppointmentStatus;
 import com.erick.nutricontrol.dto.appointment.AppointmentDetailDTO;
-import com.erick.nutricontrol.dto.appointment.AppointmentListDTO;
 import com.erick.nutricontrol.dto.appointment.AppointmentRequestDTO;
 import com.erick.nutricontrol.exception.BadRequestException;
 import com.erick.nutricontrol.exception.NotFoundException;
@@ -20,7 +19,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -51,19 +49,11 @@ public class AppointmentServiceImpl implements AppointmentService {
     public AppointmentDetailDTO addAppointment(String username, AppointmentRequestDTO dto) {
         User user = userRepository.findByUsername(username).orElseThrow(() -> new NotFoundException("User not found"));
         User admin = userRepository.findById(dto.adminId()).orElseThrow(() -> new NotFoundException("Admin not found"));
-        boolean isTaken = repository.existsByDateAndStartTimeAndAppointmentStatusNot(
-                dto.date(),
-                dto.startTime(),
-                AppointmentStatus.CANCELLED
-        );
+        Map<LocalDate, List<LocalTime>> availableSlots = getAvailableAppointments();
+        List<LocalTime> slotsForRequestedDate = availableSlots.getOrDefault(dto.date(), Collections.emptyList());
 
-        if (isTaken) {
-            throw new RuntimeException("This appointment is reserved");
-        }
-
-        boolean isException = scheduleExceptionRepository.existsByDate(dto.date());
-        if (isException) {
-            throw new BadRequestException("Invalid Date");
+        if (!slotsForRequestedDate.contains(dto.startTime())) {
+            throw new BadRequestException("Appointment not available");
         }
 
         Appointment appointment = mapper.toEntity(dto);
@@ -100,22 +90,35 @@ public class AppointmentServiceImpl implements AppointmentService {
             LocalDate currentDate = today.plusDays(i);
             DayOfWeek currentDayOfWeek = currentDate.getDayOfWeek();
 
-            boolean isException = scheduleExceptions.stream()
-                    .anyMatch(exception -> exception.getDate().equals(currentDate));
-
-            if (isException) {
-                continue;
-            }
-
-            ScheduleRule ruleForDay = scheduleRules.stream()
-                    .filter(rule -> rule.getDayOfWeek().equals(currentDayOfWeek))
+            ScheduleException exceptionForDay = scheduleExceptions.stream()
+                    .filter(exception -> exception.getDate().equals(currentDate))
                     .findFirst()
                     .orElse(null);
 
-            if (ruleForDay != null) {
-                List<LocalTime> dailySlots = calculateMinutes(ruleForDay, minutesGap);
-                Set<LocalTime> bookedToday = bookedSlotsPerDay.getOrDefault(currentDate, Collections.emptySet());
+            List<LocalTime> dailySlots = new ArrayList<>();
 
+            if (exceptionForDay != null) {
+                if (!exceptionForDay.getStartTime().equals(exceptionForDay.getEndTime())) {
+                    dailySlots = calculateMinutes(exceptionForDay.getStartTime(), exceptionForDay.getEndTime(), minutesGap);
+                }
+            } else {
+                ScheduleRule ruleForDay = scheduleRules.stream()
+                        .filter(rule -> rule.getDayOfWeek().equals(currentDayOfWeek))
+                        .findFirst()
+                        .orElse(null);
+
+                if (ruleForDay != null) {
+                    dailySlots = calculateMinutes(ruleForDay.getStartTime(), ruleForDay.getEndTime(), minutesGap);
+                }
+            }
+
+            if (!dailySlots.isEmpty()) {
+                if (currentDate.equals(today)) {
+                    LocalTime now = LocalTime.now();
+                    dailySlots.removeIf(slot -> slot.isBefore(now));
+                }
+
+                Set<LocalTime> bookedToday = bookedSlotsPerDay.getOrDefault(currentDate, Collections.emptySet());
                 dailySlots.removeAll(bookedToday);
 
                 if (!dailySlots.isEmpty()) {
@@ -127,10 +130,9 @@ public class AppointmentServiceImpl implements AppointmentService {
         return availability;
     }
 
-    private List<LocalTime> calculateMinutes(ScheduleRule aux, Integer minutesGap) {
+    private List<LocalTime> calculateMinutes(LocalTime startTime, LocalTime endTime, Integer minutesGap) {
         List<LocalTime> list = new ArrayList<>();
-        LocalTime currentTime = aux.getStartTime();
-        LocalTime endTime = aux.getEndTime();
+        LocalTime currentTime = startTime;
 
         while (!currentTime.plusMinutes(minutesGap).isAfter(endTime)) {
             list.add(currentTime);
@@ -141,23 +143,23 @@ public class AppointmentServiceImpl implements AppointmentService {
     }
 
     @Override
-    public Page<AppointmentListDTO> listUserAppointments(String username, Pageable pageable){
+    public Page<AppointmentDetailDTO> listUserAppointments(String username, Pageable pageable){
         User user = userRepository.findByUsername(username).orElseThrow(()-> new NotFoundException("User not found"));
         Page<Appointment> page = repository.findByUser(user, pageable);
         if(page.isEmpty()){
             return Page.empty();
         }
-        return page.map(mapper::toListDTO);
+        return page.map(mapper::toDetailDTO);
     }
 
     @Override
-    public Page<AppointmentListDTO> listAdminAppointments(String username, Pageable pageable){
+    public Page<AppointmentDetailDTO> listAdminAppointments(String username, Pageable pageable){
         User admin = userRepository.findByUsername(username).orElseThrow(()-> new NotFoundException("User not found"));
         Page<Appointment> page = repository.findByAdmin(admin, pageable);
         if(page.isEmpty()){
             return Page.empty();
         }
-        return page.map(mapper::toListDTO);
+        return page.map(mapper::toDetailDTO);
     }
 
     @Override

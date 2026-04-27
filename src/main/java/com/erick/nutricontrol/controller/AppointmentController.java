@@ -1,7 +1,6 @@
 package com.erick.nutricontrol.controller;
 
 import com.erick.nutricontrol.dto.appointment.AppointmentDetailDTO;
-import com.erick.nutricontrol.dto.appointment.AppointmentListDTO;
 import com.erick.nutricontrol.dto.appointment.AppointmentRequestDTO;
 import com.erick.nutricontrol.service.AppointmentService;
 import jakarta.validation.Valid;
@@ -39,13 +38,13 @@ public class AppointmentController {
 
     @PreAuthorize("hasAuthority('ROLE_PATIENT')")
     @GetMapping("/user")
-    public ResponseEntity<Page<AppointmentListDTO>> listUserAppointments(Authentication authentication, Pageable pageable){
+    public ResponseEntity<Page<AppointmentDetailDTO>> listUserAppointments(Authentication authentication, Pageable pageable){
         return ResponseEntity.status(HttpStatus.OK).body(service.listUserAppointments(authentication.getName(), pageable));
     }
 
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @GetMapping("/admin")
-    public ResponseEntity<Page<AppointmentListDTO>> listAdminAppointments(Authentication authentication, Pageable pageable){
+    public ResponseEntity<Page<AppointmentDetailDTO>> listAdminAppointments(Authentication authentication, Pageable pageable){
         return ResponseEntity.status(HttpStatus.OK).body(service.listAdminAppointments(authentication.getName(), pageable));
     }
 }
