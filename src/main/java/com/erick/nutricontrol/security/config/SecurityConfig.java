@@ -29,6 +29,24 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
+                        //APPOINTMENTS
+                        .requestMatchers("/api/appointments/admin").hasRole("ADMIN")
+                        .requestMatchers("/api/appointments/*").hasRole("PATIENT")
+                        //MEDICALRECORD
+
+                        //PAYMENT
+
+                        //SCHEDULEEXCEPTION
+                        .requestMatchers("/api/schedule_exceptions").hasRole("ADMIN")
+                        //SCHEDULERULE
+                        .requestMatchers("/api/schedule_rules").hasRole("ADMIN")
+                        //SERVICE
+                        .requestMatchers("/api/services/public").permitAll()
+                        .requestMatchers("/api/services/*").hasRole("ADMIN")
+                        //AUTHENTICATION
+                        .requestMatchers("/api/auth/logged/*").hasAnyRole("ADMIN", "PATIENT")
+                        .requestMatchers("/api/auth/admin/*").hasRole("ADMIN")
+                        .requestMatchers("/api/auth/*").permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

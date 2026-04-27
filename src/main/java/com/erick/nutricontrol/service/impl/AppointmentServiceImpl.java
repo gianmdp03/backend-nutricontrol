@@ -17,6 +17,7 @@ import com.erick.nutricontrol.security.user.model.User;
 import com.erick.nutricontrol.security.user.repository.UserRepository;
 import com.erick.nutricontrol.service.AppointmentService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
@@ -38,6 +39,12 @@ public class AppointmentServiceImpl implements AppointmentService {
     private final ScheduleRuleRepository scheduleRuleRepository;
     private final ScheduleExceptionRepository scheduleExceptionRepository;
     private final UserRepository userRepository;
+
+    @Value("${nutricontrol.appointments.days}")
+    private Integer days;
+
+    @Value("${nutricontrol.appointments.minutes-gap}")
+    private Integer minutesGap;
 
     @Override
     @Transactional
@@ -72,7 +79,7 @@ public class AppointmentServiceImpl implements AppointmentService {
     //SI PAGA CIERTO TIEMPO Y EL USUARIO NO PAGA, SE ELIMINA EL TURNO.
 
     @Override
-    public Map<LocalDate, List<LocalTime>> getAvailableAppointments(Integer days, Integer minutesGap) {
+    public Map<LocalDate, List<LocalTime>> getAvailableAppointments() {
         List<ScheduleRule> scheduleRules = scheduleRuleRepository.findAll();
         List<ScheduleException> scheduleExceptions = scheduleExceptionRepository.findAll();
 
@@ -134,8 +141,7 @@ public class AppointmentServiceImpl implements AppointmentService {
     }
 
     @Override
-    public Page<AppointmentListDTO> listUserAppointments(Authentication authentication, Pageable pageable){
-        String username = authentication.getName();
+    public Page<AppointmentListDTO> listUserAppointments(String username, Pageable pageable){
         User user = userRepository.findByUsername(username).orElseThrow(()-> new NotFoundException("User not found"));
         Page<Appointment> page = repository.findByUser(user, pageable);
         if(page.isEmpty()){
@@ -145,8 +151,7 @@ public class AppointmentServiceImpl implements AppointmentService {
     }
 
     @Override
-    public Page<AppointmentListDTO> listAdminAppointments(Authentication authentication, Pageable pageable){
-        String username = authentication.getName();
+    public Page<AppointmentListDTO> listAdminAppointments(String username, Pageable pageable){
         User admin = userRepository.findByUsername(username).orElseThrow(()-> new NotFoundException("User not found"));
         Page<Appointment> page = repository.findByAdmin(admin, pageable);
         if(page.isEmpty()){

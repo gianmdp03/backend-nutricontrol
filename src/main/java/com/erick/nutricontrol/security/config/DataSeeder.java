@@ -21,9 +21,9 @@ public class DataSeeder {
 
             userRepository.findByEmail(adminEmail).ifPresentOrElse(
                     (existingAdmin) -> {
-                        existingAdmin.setName("Admin");
-                        existingAdmin.setLastname("Admin");
-                        existingAdmin.setUsername("admin2003");
+                        existingAdmin.setName("Zully");
+                        existingAdmin.setLastname("Cepeda");
+                        existingAdmin.setUsername("zcepeda");
                         existingAdmin.setPassword(passwordEncoder.encode("123456"));
                         existingAdmin.setRole(Role.ROLE_ADMIN);
 
@@ -33,9 +33,9 @@ public class DataSeeder {
                     () -> {
                         User admin = new User();
                         admin.setEmail(adminEmail);
-                        admin.setName("Admin");
-                        admin.setLastname("Admin");
-                        admin.setUsername("admin2003");
+                        admin.setName("Zully");
+                        admin.setLastname("Cepeda");
+                        admin.setUsername("zcepeda");
                         admin.setPassword(passwordEncoder.encode("123456"));
                         admin.setRole(Role.ROLE_ADMIN);
 

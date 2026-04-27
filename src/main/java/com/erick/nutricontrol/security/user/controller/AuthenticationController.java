@@ -140,13 +140,13 @@ public class AuthenticationController {
         return ResponseEntity.status(HttpStatus.OK).body(authenticationService.getUserById(id));
     }
 
-    @PatchMapping("/logged/user/picture")
+    @PatchMapping("/logged/picture")
     public ResponseEntity<Void> updateProfilePicture(Authentication authentication, @Valid @RequestBody UserProfilePictureDTO dto){
         authenticationService.updateProfilePicture(authentication.getName(), dto);
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
-    @GetMapping("/profile")
+    @GetMapping("/logged/profile")
     public ResponseEntity<UserDetailDTO> getProfile(Authentication authentication) {
         if (authentication == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();

@@ -14,8 +14,8 @@ import java.util.Map;
 
 public interface AppointmentService{
     AppointmentDetailDTO addAppointment(String username, AppointmentRequestDTO dto);
-    Map<LocalDate, List<LocalTime>> getAvailableAppointments(Integer days, Integer minutesGap);
-    Page<AppointmentListDTO> listUserAppointments(Authentication authentication, Pageable pageable);
-    Page<AppointmentListDTO> listAdminAppointments(Authentication authentication, Pageable pageable);
+    Map<LocalDate, List<LocalTime>> getAvailableAppointments();
+    Page<AppointmentListDTO> listUserAppointments(String username, Pageable pageable);
+    Page<AppointmentListDTO> listAdminAppointments(String username, Pageable pageable);
     void deleteAppointment(Long id);
 }

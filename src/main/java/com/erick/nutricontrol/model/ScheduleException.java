@@ -24,6 +24,7 @@ public class ScheduleException {
 
   @Column(nullable = false)
   private LocalTime startTime;
+
   @Column(nullable = false)
   private LocalTime endTime;
 
