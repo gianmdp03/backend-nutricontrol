@@ -96,6 +96,11 @@ public class AuthenticationController {
         return ResponseEntity.status(HttpStatus.OK).body(authenticationService.listBannedUsers(pageable));
     }
 
+    @GetMapping("/admins")
+    public ResponseEntity<Page<UserDetailDTO>> listAdmins(@PageableDefault(page=0, size = 10, sort="name", direction = Sort.Direction.DESC) Pageable pageable){
+        return ResponseEntity.status(HttpStatus.OK).body(authenticationService.listAdmins(pageable));
+    }
+
     @GetMapping("/admin/patients")
     public ResponseEntity<Page<UserDetailDTO>> listPatients(
             @PageableDefault(page=0, size = 10, sort="name", direction = Sort.Direction.DESC) Pageable pageable){

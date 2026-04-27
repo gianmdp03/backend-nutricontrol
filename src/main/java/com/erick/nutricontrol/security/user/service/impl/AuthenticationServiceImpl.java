@@ -234,6 +234,24 @@ public class AuthenticationServiceImpl implements AuthenticationService {
   }
 
   @Override
+  public Page<UserDetailDTO> listAdmins(Pageable pageable){
+      Page<User> page = userRepository.findByRoleAndIsBannedFalse(Role.ROLE_ADMIN, pageable);
+      if(page.isEmpty()) {
+          return Page.empty();
+      }
+      return page.map(user -> new UserDetailDTO(
+              user.getId(),
+              user.getName(),
+              user.getLastname(),
+              user.getEmail(),
+              user.getUsername(),
+              user.getRole().name(),
+              user.isBanned(),
+              user.isEmailConfirmed(),
+              user.getProfilePicture()));
+  }
+
+  @Override
   public Page<UserDetailDTO> listPatients(Pageable pageable) {
     Page<User> page = userRepository.findByRoleAndIsBannedFalse(Role.ROLE_PATIENT, pageable);
     if (page.isEmpty()) {

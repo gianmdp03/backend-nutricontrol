@@ -17,6 +17,7 @@ public interface AuthenticationService {
     void updateUser(String email, UserUpdateDTO dto);
     Page<UserDetailDTO> listUsers(Pageable pageable);
     Page<UserDetailDTO> listBannedUsers(Pageable pageable);
+    Page<UserDetailDTO> listAdmins(Pageable pageable);
     Page<UserDetailDTO> listPatients(Pageable pageable);
     Page<UserDetailDTO> searchUsersByUsername(String username, Pageable pageable);
     Page<UserDetailDTO> searchUsersByEmail(String email, Pageable pageable);
