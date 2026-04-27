@@ -17,6 +17,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -74,22 +75,10 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
   @Override
   public AuthenticationResponseDTO authenticate(AuthenticationRequestDTO request) {
-    authenticationManager.authenticate(
-        new UsernamePasswordAuthenticationToken(request.loginInput(), request.password()));
-    User user;
-    if (request.loginInput().contains("@")) {
-      user =
-          userRepository
-              .findByEmail(request.loginInput())
-              .orElseThrow(() -> new NotFoundException("User not found"));
-    } else {
-      user =
-          userRepository
-              .findByUsername(request.loginInput())
-              .orElseThrow(() -> new NotFoundException("User not found"));
-    }
-
-    String jwtToken = jwtService.generateToken(user);
+      Authentication auth = authenticationManager.authenticate(
+              new UsernamePasswordAuthenticationToken(request.loginInput(), request.password()));
+      User user = (User) auth.getPrincipal();
+      String jwtToken = jwtService.generateToken(user);
     UserDetailDTO userDetail =
         new UserDetailDTO(
             user.getId(),
