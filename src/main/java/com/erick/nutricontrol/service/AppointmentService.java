@@ -16,4 +16,5 @@ public interface AppointmentService{
     Page<AppointmentDetailDTO> listUserAppointments(String username, Pageable pageable);
     Page<AppointmentDetailDTO> listAdminAppointments(String username, Pageable pageable);
     void deleteAppointment(Long id);
+    void adminDeleteAppointment(Long id, boolean refund);
 }

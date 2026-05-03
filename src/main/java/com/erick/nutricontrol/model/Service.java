@@ -23,16 +23,8 @@ public class Service {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String description;
 
-    @Column(nullable = false, precision = 10, scale = 2)
-    private BigDecimal price;
-
-    @Column(nullable = false)
-    private Boolean available;
-
-    public Service(String name, String description, BigDecimal price, Boolean available) {
+    public Service(String name, String description) {
         this.name = name;
         this.description = description;
-        this.price = price;
-        this.available = available;
     }
 }

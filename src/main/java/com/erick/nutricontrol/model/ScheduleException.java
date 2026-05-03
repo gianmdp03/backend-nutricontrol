@@ -1,5 +1,6 @@
 package com.erick.nutricontrol.model;
 
+import com.erick.nutricontrol.security.user.model.User;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -30,10 +31,15 @@ public class ScheduleException {
 
   private String reason;
 
-  public ScheduleException(LocalDate date, LocalTime startTime, LocalTime endTime, String reason) {
+  @ManyToOne
+  @JoinColumn(name = "admin_id")
+  private User admin;
+
+  public ScheduleException(LocalDate date, LocalTime startTime, LocalTime endTime, String reason, User admin) {
     this.date = date;
     this.startTime = startTime;
     this.endTime = endTime;
     this.reason = reason;
+    this.admin = admin;
   }
 }

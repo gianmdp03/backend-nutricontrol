@@ -1,5 +1,6 @@
 package com.erick.nutricontrol.model;
 
+import com.erick.nutricontrol.security.user.model.User;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -30,10 +31,15 @@ public class ScheduleRule {
   @Column(nullable = false)
   private LocalTime endTime;
 
+  @ManyToOne
+  @JoinColumn(name = "admin_id")
+  private User admin;
+
   public ScheduleRule(
-      DayOfWeek dayOfWeek, LocalTime startTime, LocalTime endTime) {
+      DayOfWeek dayOfWeek, LocalTime startTime, LocalTime endTime, User admin) {
     this.dayOfWeek = dayOfWeek;
     this.startTime = startTime;
     this.endTime = endTime;
+    this.admin = admin;
   }
 }

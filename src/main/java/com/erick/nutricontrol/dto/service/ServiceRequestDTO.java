@@ -8,6 +8,4 @@ import java.math.BigDecimal;
 
 public record ServiceRequestDTO(
     @NotBlank String name,
-    @NotBlank String description,
-    @NotNull @Positive BigDecimal price,
-    @NotNull Boolean available) {}
+    @NotBlank String description) {}

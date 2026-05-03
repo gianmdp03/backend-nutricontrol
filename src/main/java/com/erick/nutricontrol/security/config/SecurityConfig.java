@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -18,6 +19,7 @@ import java.util.List;
 
 @Configuration
 @EnableWebSecurity
+//@EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthFilter;
@@ -29,7 +31,7 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
-                        //APPOINTMENTS
+                        /*//APPOINTMENTS
                         .requestMatchers("/api/appointments/admin").hasRole("ADMIN")
                         .requestMatchers("/api/appointments/*").hasRole("PATIENT")
                         //MEDICALRECORD
@@ -47,7 +49,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/logged/*").hasAnyRole("ADMIN", "PATIENT")
                         .requestMatchers("/api/auth/admin/*").hasRole("ADMIN")
                         .requestMatchers("/api/auth/*").permitAll()
-                        .anyRequest().authenticated()
+                        .anyRequest().authenticated()*/
+                        .anyRequest().permitAll()
                 )
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider)

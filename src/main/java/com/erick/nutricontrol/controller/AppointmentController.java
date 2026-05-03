@@ -47,4 +47,19 @@ public class AppointmentController {
     public ResponseEntity<Page<AppointmentDetailDTO>> listAdminAppointments(Authentication authentication, Pageable pageable){
         return ResponseEntity.status(HttpStatus.OK).body(service.listAdminAppointments(authentication.getName(), pageable));
     }
+
+    @PreAuthorize("hasAuthority('ROLE_PATIENT')")
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteAppointment(@PathVariable Long id){
+        service.deleteAppointment(id);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
+
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @DeleteMapping("/admin/{id}")
+    public ResponseEntity<Void> adminDeleteAppointment(@PathVariable Long id){
+        boolean refund = true;
+        service.adminDeleteAppointment(id, refund);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
 }
