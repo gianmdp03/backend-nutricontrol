@@ -1,5 +1,13 @@
 package com.erick.nutricontrol.service.impl;
 
+import com.erick.nutricontrol._enum.PaymentStatus;
+import com.erick.nutricontrol.dto.payment.PaymentConfirmRequestDTO;
+import com.erick.nutricontrol.dto.payment.PaymentOrderResponseDTO;
+import com.erick.nutricontrol.dto.payment.PaymentRequestDTO;
+import com.erick.nutricontrol.exception.NotFoundException;
+import com.erick.nutricontrol.model.Appointment;
+import com.erick.nutricontrol.model.Payment;
+import com.erick.nutricontrol.repository.AppointmentRepository;
 import com.erick.nutricontrol.repository.PaymentRepository;
 import com.erick.nutricontrol.service.PaymentService;
 import com.paypal.sdk.PaypalServerSdkClient;
@@ -23,6 +31,7 @@ import java.util.List;
 public class PaymentServiceImpl implements PaymentService {
   private final PaypalServerSdkClient paypalClient;
   private final PaymentRepository repository;
+  private final AppointmentRepository appointmentRepository;
 
   @Value("${paypal.return-url}")
   private String returnUrl;
@@ -30,8 +39,15 @@ public class PaymentServiceImpl implements PaymentService {
   @Value("${paypal.cancel-url}")
   private String cancelUrl;
 
-  public String createPaymentHold(BigDecimal amount, Long appointmentId)
-      throws IOException, ApiException {
+  @Transactional
+  public PaymentOrderResponseDTO createPaymentHold(PaymentRequestDTO paymentRequestDTO)
+      throws ApiException, IOException {
+    Appointment appointment =
+        appointmentRepository
+            .findById(paymentRequestDTO.appointmentId())
+            .orElseThrow(() -> new NotFoundException("Appointment not found"));
+    BigDecimal amount = BigDecimal.valueOf(150);
+
     OrdersController ordersController = paypalClient.getOrdersController();
 
     AmountWithBreakdown amountBreakdown =
@@ -40,14 +56,11 @@ public class PaymentServiceImpl implements PaymentService {
     PurchaseUnitRequest purchaseUnitRequest =
         new PurchaseUnitRequest.Builder()
             .amount(amountBreakdown)
-            .description("Reserva de turno médico #" + appointmentId)
+            .description("Reserva de turno médico #" + appointment.getId())
             .build();
 
     OrderApplicationContext applicationContext =
-        new OrderApplicationContext.Builder()
-            .returnUrl(returnUrl)
-            .cancelUrl(cancelUrl)
-            .build();
+        new OrderApplicationContext.Builder().returnUrl(returnUrl).cancelUrl(cancelUrl).build();
 
     OrderRequest orderRequest =
         new OrderRequest.Builder()
@@ -59,32 +72,57 @@ public class PaymentServiceImpl implements PaymentService {
     CreateOrderInput createOrderInput = new CreateOrderInput.Builder().body(orderRequest).build();
 
     ApiResponse<Order> apiResponse = ordersController.createOrder(createOrderInput);
-
     Order order = apiResponse.getResult();
 
-    return order.getId();
+    String approveLink =
+        order.getLinks().stream()
+            .filter(link -> "approve".equals(link.getRel()))
+            .findFirst()
+            .map(LinkDescription::getHref)
+            .orElseThrow(() -> new NotFoundException("Payment link not found"));
+
+    Payment payment = Payment.builder()
+            .appointment(appointment)
+            .amount(amount)
+            .currency("USD")
+            .paypalOrderId(order.getId())
+            .status(PaymentStatus.PENDING)
+            .build();
+    repository.save(payment);
+
+    return new PaymentOrderResponseDTO(order.getId(), approveLink);
   }
 
-  public String confirmPaymentHold(String orderId) throws IOException, ApiException {
+  @Transactional
+  public void confirmPaymentHold(PaymentConfirmRequestDTO confirmDTO) throws IOException, ApiException {
+    Payment payment = repository.findByPaypalOrderId(confirmDTO.paypalOrderId()).orElseThrow(() -> new NotFoundException("Payment not found"));
+
     OrdersController ordersController = paypalClient.getOrdersController();
 
-    AuthorizeOrderInput authorizeInput = new AuthorizeOrderInput.Builder().id(orderId).build();
+    AuthorizeOrderInput authorizeInput =
+        new AuthorizeOrderInput.Builder().id(confirmDTO.paypalOrderId()).build();
 
     ApiResponse<OrderAuthorizeResponse> apiResponse =
         ordersController.authorizeOrder(authorizeInput);
 
     OrderAuthorizeResponse orderAuthorizeResponse = apiResponse.getResult();
 
-    return orderAuthorizeResponse
+    String authorizationId = orderAuthorizeResponse
         .getPurchaseUnits()
         .getFirst()
         .getPayments()
         .getAuthorizations()
         .getFirst()
         .getId();
+
+    payment.setPaypalAuthorizationId(authorizationId);
+    payment.setStatus(PaymentStatus.AUTHORIZED);
+    repository.save(payment);
   }
 
+  @Transactional
   public String capturePayment(String authorizationId) throws IOException, ApiException {
+    Payment payment = repository.findByPaypalAuthorizationId(authorizationId).orElseThrow(() -> new NotFoundException("Payment not found"));
     PaymentsController paymentsController = paypalClient.getPaymentsController();
 
     CaptureAuthorizedPaymentInput captureInput =
@@ -95,30 +133,43 @@ public class PaymentServiceImpl implements PaymentService {
 
     CapturedPayment capture = apiResponse.getResult();
 
+    payment.setPaypalCaptureId(capture.getId());
+    payment.setStatus(PaymentStatus.CAPTURED);
+    repository.save(payment);
+
     return capture.getId();
   }
 
+  @Transactional
   public void voidPayment(String authorizationId) throws IOException, ApiException {
+    Payment payment = repository.findByPaypalAuthorizationId(authorizationId).orElseThrow(() -> new NotFoundException("Payment not found"));
     PaymentsController paymentsController = paypalClient.getPaymentsController();
 
     VoidPaymentInput voidInput =
         new VoidPaymentInput.Builder().authorizationId(authorizationId).build();
 
     paymentsController.voidPayment(voidInput);
+
+    payment.setStatus(PaymentStatus.VOIDED);
+    repository.save(payment);
   }
 
+  @Transactional
   public String refundPayment(String captureId) throws IOException, ApiException {
+    Payment payment = repository.findByPaypalCaptureId(captureId).orElseThrow(() -> new NotFoundException("Payment not found"));
+
     PaymentsController paymentsController = paypalClient.getPaymentsController();
 
     RefundCapturedPaymentInput refundInput =
-            new RefundCapturedPaymentInput.Builder()
-                    .captureId(captureId)
-                    .build();
+        new RefundCapturedPaymentInput.Builder().captureId(captureId).build();
 
-    ApiResponse<Refund> apiResponse =
-            paymentsController.refundCapturedPayment(refundInput);
+    ApiResponse<Refund> apiResponse = paymentsController.refundCapturedPayment(refundInput);
 
     Refund refund = apiResponse.getResult();
+
+    payment.setPaypalRefundId(refund.getId());
+    payment.setStatus(PaymentStatus.REFUNDED);
+    repository.save(payment);
 
     return refund.getId();
   }

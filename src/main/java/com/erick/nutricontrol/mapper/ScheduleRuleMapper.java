@@ -10,10 +10,12 @@ import org.mapstruct.*;
 @Mapper(componentModel = "spring")
 public abstract class ScheduleRuleMapper {
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "admin", ignore = true)
     public abstract ScheduleRule toEntity(ScheduleRuleRequestDTO dto);
     public abstract ScheduleRuleDetailDTO toDetailDTO(ScheduleRule entity);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "admin", ignore = true)
     public abstract void updateEntityFromDto(ScheduleRuleUpdateDTO dto, @MappingTarget ScheduleRule entity);
 }

@@ -11,8 +11,6 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
-@Builder
 public class Payment {
 
     @Id
@@ -50,6 +48,18 @@ public class Payment {
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @Builder
+    public Payment(Appointment appointment, BigDecimal amount, String currency, String paypalOrderId, String paypalAuthorizationId, String paypalCaptureId, String paypalRefundId, PaymentStatus status) {
+        this.appointment = appointment;
+        this.amount = amount;
+        this.currency = currency;
+        this.paypalOrderId = paypalOrderId;
+        this.paypalAuthorizationId = paypalAuthorizationId;
+        this.paypalCaptureId = paypalCaptureId;
+        this.paypalRefundId = paypalRefundId;
+        this.status = status;
+    }
 
     @PrePersist
     protected void onCreate() {
