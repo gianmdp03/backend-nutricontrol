@@ -9,6 +9,7 @@ import com.paypal.sdk.exceptions.ApiException;
 import com.paypal.sdk.http.response.ApiResponse;
 import com.paypal.sdk.models.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +23,12 @@ import java.util.List;
 public class PaymentServiceImpl implements PaymentService {
   private final PaypalServerSdkClient paypalClient;
   private final PaymentRepository repository;
+
+  @Value("${paypal.return-url}")
+  private String returnUrl;
+
+  @Value("${paypal.cancel-url}")
+  private String cancelUrl;
 
   public String createPaymentHold(BigDecimal amount, Long appointmentId)
       throws IOException, ApiException {
@@ -38,8 +45,8 @@ public class PaymentServiceImpl implements PaymentService {
 
     OrderApplicationContext applicationContext =
         new OrderApplicationContext.Builder()
-            .returnUrl("https://tudominio.com/turnos/exito")
-            .cancelUrl("https://tudominio.com/turnos/cancelado")
+            .returnUrl(returnUrl)
+            .cancelUrl(cancelUrl)
             .build();
 
     OrderRequest orderRequest =
