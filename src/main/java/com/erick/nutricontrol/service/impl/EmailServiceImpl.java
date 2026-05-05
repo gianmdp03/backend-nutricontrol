@@ -8,6 +8,7 @@ import org.springframework.core.io.ByteArrayResource;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -19,6 +20,7 @@ public class EmailServiceImpl implements EmailService {
     private String email;
 
     @Override
+    @Async
     public void sendEmail(String to, String subject, String body) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setFrom(email);
@@ -29,6 +31,8 @@ public class EmailServiceImpl implements EmailService {
         javaMailSender.send(message);
     }
 
+    @Override
+    @Async
     public void sendEmailWithReceipt(String to, String subject, String body, byte[] pdfBytes) throws Exception {
         MimeMessage message = javaMailSender.createMimeMessage();
 

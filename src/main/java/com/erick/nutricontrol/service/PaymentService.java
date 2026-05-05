@@ -9,7 +9,7 @@ import java.io.IOException;
 
 public interface PaymentService {
     PaymentOrderResponseDTO createPaymentHold(PaymentRequestDTO paymentRequestDTO) throws IOException, ApiException;
-    void confirmPaymentHold(PaymentConfirmRequestDTO confirmDTO) throws IOException, ApiException;
+    void confirmPaymentHold(PaymentConfirmRequestDTO confirmDTO) throws Exception;
     String capturePayment(String authorizationId) throws IOException, ApiException;
     void voidPayment(String authorizationId) throws IOException, ApiException;
     String refundPayment(String captureId) throws IOException, ApiException;

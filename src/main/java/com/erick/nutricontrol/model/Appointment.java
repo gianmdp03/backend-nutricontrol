@@ -8,7 +8,10 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Getter
@@ -37,9 +40,15 @@ public class Appointment {
     @JoinColumn(name = "admin_id", nullable = false)
     private User admin;
 
+    @OneToMany(mappedBy = "appointment")
+    private List<Payment> payments = new ArrayList<>();
+
     @Column(length = 20, nullable = false)
     @Enumerated(EnumType.STRING)
     private AppointmentStatus appointmentStatus;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
 
     public Appointment(LocalDate date, LocalTime startTime, LocalTime endTime, User user, User admin, AppointmentStatus appointmentStatus) {
         this.date = date;
@@ -48,5 +57,10 @@ public class Appointment {
         this.user = user;
         this.admin = admin;
         this.appointmentStatus = appointmentStatus;
+    }
+
+    @PrePersist
+    protected void onCreate(){
+        this.createdAt = LocalDateTime.now();
     }
 }

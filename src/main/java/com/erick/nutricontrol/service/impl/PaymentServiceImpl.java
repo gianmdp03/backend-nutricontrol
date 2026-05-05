@@ -1,14 +1,19 @@
 package com.erick.nutricontrol.service.impl;
 
+import com.erick.nutricontrol._enum.AppointmentStatus;
 import com.erick.nutricontrol._enum.PaymentStatus;
 import com.erick.nutricontrol.dto.payment.PaymentConfirmRequestDTO;
 import com.erick.nutricontrol.dto.payment.PaymentOrderResponseDTO;
 import com.erick.nutricontrol.dto.payment.PaymentRequestDTO;
+import com.erick.nutricontrol.dto.payment.PaymentVoidRequestDTO;
+import com.erick.nutricontrol.exception.ConflictException;
 import com.erick.nutricontrol.exception.NotFoundException;
 import com.erick.nutricontrol.model.Appointment;
 import com.erick.nutricontrol.model.Payment;
 import com.erick.nutricontrol.repository.AppointmentRepository;
 import com.erick.nutricontrol.repository.PaymentRepository;
+import com.erick.nutricontrol.service.EmailService;
+import com.erick.nutricontrol.service.PDFGeneratorService;
 import com.erick.nutricontrol.service.PaymentService;
 import com.paypal.sdk.PaypalServerSdkClient;
 import com.paypal.sdk.controllers.OrdersController;
@@ -32,6 +37,8 @@ public class PaymentServiceImpl implements PaymentService {
   private final PaypalServerSdkClient paypalClient;
   private final PaymentRepository repository;
   private final AppointmentRepository appointmentRepository;
+  private final PDFGeneratorService pdfGeneratorService;
+  private final EmailService emailService;
 
   @Value("${paypal.return-url}")
   private String returnUrl;
@@ -39,6 +46,7 @@ public class PaymentServiceImpl implements PaymentService {
   @Value("${paypal.cancel-url}")
   private String cancelUrl;
 
+  @Override
   @Transactional
   public PaymentOrderResponseDTO createPaymentHold(PaymentRequestDTO paymentRequestDTO)
       throws ApiException, IOException {
@@ -93,10 +101,11 @@ public class PaymentServiceImpl implements PaymentService {
     return new PaymentOrderResponseDTO(order.getId(), approveLink);
   }
 
+  @Override
   @Transactional
-  public void confirmPaymentHold(PaymentConfirmRequestDTO confirmDTO) throws IOException, ApiException {
+  public void confirmPaymentHold(PaymentConfirmRequestDTO confirmDTO) throws Exception {
     Payment payment = repository.findByPaypalOrderId(confirmDTO.paypalOrderId()).orElseThrow(() -> new NotFoundException("Payment not found"));
-
+    Appointment appointment = payment.getAppointment();
     OrdersController ordersController = paypalClient.getOrdersController();
 
     AuthorizeOrderInput authorizeInput =
@@ -115,11 +124,32 @@ public class PaymentServiceImpl implements PaymentService {
         .getFirst()
         .getId();
 
+    if(appointment.getAppointmentStatus().equals(AppointmentStatus.CANCELLED)){
+      this.voidPayment(authorizationId);
+      throw new ConflictException("El tiempo para pagar expiró y el turno fue liberado. Hemos anulado la retención y los fondos no se cobrarán.");
+    }
+
     payment.setPaypalAuthorizationId(authorizationId);
     payment.setStatus(PaymentStatus.AUTHORIZED);
     repository.save(payment);
+
+    appointment.setAppointmentStatus(AppointmentStatus.CONFIRMED);
+    appointmentRepository.save(appointment);
+
+    String patientName = appointment.getUser().getName();
+    String patientEmail = appointment.getUser().getEmail();
+    String appointmentDate = appointment.getDate().toString();
+    String doctorName = appointment.getAdmin().getName();
+
+    byte[] pdfBytes = pdfGeneratorService.generateAppointmentReceipt(patientName, appointmentDate, doctorName);
+
+    String subject = "NutriControl - Comprobante de reserva de turno";
+    String body = "Hola " + patientName + ",\n\nAdjuntamos el comprobante de tu turno confirmado.\n¡Te esperamos!";
+
+    emailService.sendEmailWithReceipt(patientEmail, subject, body, pdfBytes);
   }
 
+  @Override
   @Transactional
   public String capturePayment(String authorizationId) throws IOException, ApiException {
     Payment payment = repository.findByPaypalAuthorizationId(authorizationId).orElseThrow(() -> new NotFoundException("Payment not found"));
@@ -140,6 +170,7 @@ public class PaymentServiceImpl implements PaymentService {
     return capture.getId();
   }
 
+  @Override
   @Transactional
   public void voidPayment(String authorizationId) throws IOException, ApiException {
     Payment payment = repository.findByPaypalAuthorizationId(authorizationId).orElseThrow(() -> new NotFoundException("Payment not found"));
@@ -154,6 +185,7 @@ public class PaymentServiceImpl implements PaymentService {
     repository.save(payment);
   }
 
+  @Override
   @Transactional
   public String refundPayment(String captureId) throws IOException, ApiException {
     Payment payment = repository.findByPaypalCaptureId(captureId).orElseThrow(() -> new NotFoundException("Payment not found"));

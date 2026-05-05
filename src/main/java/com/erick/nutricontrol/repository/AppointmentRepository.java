@@ -11,6 +11,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 
@@ -22,4 +23,5 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
     Page<Appointment> findByUser(User user, Pageable pageable);
     @Query("SELECT a FROM Appointment a WHERE a.appointmentStatus = 'PENDING' AND (a.date < :today OR (a.date = :today AND a.endTime <= :now))")
     List<Appointment> findExpiredAppointments(@Param("today") LocalDate today, @Param("now") LocalTime now);
+    List<Appointment> findByStatusAndCreatedAtBefore(AppointmentStatus appointmentStatus, LocalDateTime dateTime);
 }

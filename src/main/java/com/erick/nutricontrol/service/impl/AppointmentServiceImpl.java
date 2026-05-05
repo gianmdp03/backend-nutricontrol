@@ -3,19 +3,25 @@ package com.erick.nutricontrol.service.impl;
 import com.erick.nutricontrol._enum.AppointmentStatus;
 import com.erick.nutricontrol.dto.appointment.AppointmentDetailDTO;
 import com.erick.nutricontrol.dto.appointment.AppointmentRequestDTO;
+import com.erick.nutricontrol.dto.payment.PaymentOrderResponseDTO;
+import com.erick.nutricontrol.dto.payment.PaymentRequestDTO;
 import com.erick.nutricontrol.exception.BadRequestException;
 import com.erick.nutricontrol.exception.NotFoundException;
 import com.erick.nutricontrol.mapper.AppointmentMapper;
 import com.erick.nutricontrol.model.Appointment;
+import com.erick.nutricontrol.model.Payment;
 import com.erick.nutricontrol.model.ScheduleException;
 import com.erick.nutricontrol.model.ScheduleRule;
 import com.erick.nutricontrol.repository.AppointmentRepository;
+import com.erick.nutricontrol.repository.PaymentRepository;
 import com.erick.nutricontrol.repository.ScheduleExceptionRepository;
 import com.erick.nutricontrol.repository.ScheduleRuleRepository;
 import com.erick.nutricontrol.security.user.model.User;
 import com.erick.nutricontrol.security.user.repository.UserRepository;
 import com.erick.nutricontrol.service.AppointmentService;
 import com.erick.nutricontrol.service.EmailService;
+import com.erick.nutricontrol.service.PaymentService;
+import com.paypal.sdk.exceptions.ApiException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -23,8 +29,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -39,6 +47,7 @@ public class AppointmentServiceImpl implements AppointmentService {
   private final ScheduleExceptionRepository scheduleExceptionRepository;
   private final UserRepository userRepository;
   private final EmailService emailService;
+  private final PaymentService paymentService;
 
   @Value("${nutricontrol.appointments.days}")
   private Integer days;
@@ -51,7 +60,8 @@ public class AppointmentServiceImpl implements AppointmentService {
 
   @Override
   @Transactional
-  public AppointmentDetailDTO addAppointment(String username, AppointmentRequestDTO dto) {
+  public PaymentOrderResponseDTO addAppointment(String username, AppointmentRequestDTO dto)
+      throws IOException, ApiException {
     User user =
         userRepository
             .findByUsername(username)
@@ -75,22 +85,14 @@ public class AppointmentServiceImpl implements AppointmentService {
     appointment.setAppointmentStatus(AppointmentStatus.PENDING);
     appointment.setUser(user);
     appointment.setAdmin(admin);
-
-    emailService.sendEmail(
-        user.getEmail(),
-        "ASUNTO: COMPROBANTE DE TURNO",
-        "COMPROBANTE DE TURNO PARA EL DÍA "
-            + appointment.getDate()
-            + "A LAS "
-            + appointment.getStartTime());
+    appointment.setAppointmentStatus(AppointmentStatus.PENDING);
 
     appointment = repository.save(appointment);
 
-    return mapper.toDetailDTO(appointment);
-  }
+    PaymentRequestDTO paymentRequest = new PaymentRequestDTO(appointment.getId());
 
-  // CONFIRMAR TURNO - EL METODO ANTERIOR RESERVA EL TURNO MIENTRAS EL USUARIO PAGA.
-  // SI PAGA CIERTO TIEMPO Y EL USUARIO NO PAGA, SE ELIMINA EL TURNO.
+    return paymentService.createPaymentHold(paymentRequest);
+  }
 
   @Override
   public Map<LocalDate, List<LocalTime>> getAvailableAppointments() {
@@ -117,19 +119,16 @@ public class AppointmentServiceImpl implements AppointmentService {
 
       List<LocalTime> dailySlots = new ArrayList<>();
 
-      // 1. PRIMERO: Buscamos la regla normal de trabajo para este día de la semana
       ScheduleRule ruleForDay =
           scheduleRules.stream()
               .filter(rule -> rule.getDayOfWeek().equals(currentDayOfWeek))
               .findFirst()
               .orElse(null);
 
-      // Si trabaja este día, calculamos todos sus turnos
       if (ruleForDay != null) {
         dailySlots =
             calculateMinutes(ruleForDay.getStartTime(), ruleForDay.getEndTime(), minutesGap);
 
-        // 2. SEGUNDO: Buscamos si hay una excepción (bloqueo/ausencia) para esta fecha exacta
         ScheduleException exceptionForDay =
             scheduleExceptions.stream()
                 .filter(exception -> exception.getDate().equals(currentDate))
@@ -137,23 +136,19 @@ public class AppointmentServiceImpl implements AppointmentService {
                 .orElse(null);
 
         if (exceptionForDay != null) {
-          // Si la hora de inicio y fin son iguales (ej: 00:00 a 00:00), asumimos que es día
-          // libre/feriado
+
           if (exceptionForDay.getStartTime().equals(exceptionForDay.getEndTime())) {
-            dailySlots.clear(); // Vaciamos todos los turnos del día
+            dailySlots.clear();
           } else {
-            // Generamos los turnos que corresponden al bloqueo (ej: de 08:00 a 10:00)
             List<LocalTime> blockedSlots =
                 calculateMinutes(
                     exceptionForDay.getStartTime(), exceptionForDay.getEndTime(), minutesGap);
 
-            // Magia: Le restamos a los turnos normales, los turnos bloqueados
             dailySlots.removeAll(blockedSlots);
           }
         }
       }
 
-      // 3. TERCERO: Limpiamos los que ya pasaron de hora hoy y los que ya están reservados
       if (!dailySlots.isEmpty()) {
         if (currentDate.equals(today)) {
           LocalTime now = LocalTime.now();
@@ -216,8 +211,16 @@ public class AppointmentServiceImpl implements AppointmentService {
   public void deleteAppointment(Long id) {
     Appointment appointment =
         repository.findById(id).orElseThrow(() -> new NotFoundException("Appointment not found"));
+    LocalDateTime appointmentDateTime =
+        LocalDateTime.of(appointment.getDate(), appointment.getStartTime());
+    boolean isMoreThan24HoursAhead = LocalDateTime.now().plusHours(24).isBefore(appointmentDateTime);
+    if (isMoreThan24HoursAhead) {
+      processRefundIfApply(appointment, false);
+    }
+    else{
+      forcePenaltyCapture(appointment);
+    }
     repository.delete(appointment);
-    // DEVOLUCION DE DINERO
   }
 
   @Override
@@ -225,7 +228,48 @@ public class AppointmentServiceImpl implements AppointmentService {
   public void adminDeleteAppointment(Long id, boolean refund) {
     Appointment appointment =
         repository.findById(id).orElseThrow(() -> new NotFoundException("Appointment not found"));
+    LocalDateTime appointmentDateTime =
+        LocalDateTime.of(appointment.getDate(), appointment.getStartTime());
+    boolean isMoreThan24HoursAhead = LocalDateTime.now().plusHours(24).isAfter(appointmentDateTime);
+    boolean finalRefundDecision = isMoreThan24HoursAhead || refund;
+
+    processRefundIfApply(appointment, finalRefundDecision);
+
     repository.delete(appointment);
-    // DEVOLUCION DE DINERO
+  }
+
+  private void processRefundIfApply(Appointment appointment, boolean adminForcedRefund) {
+    if (!appointment.getPayments().isEmpty()) {
+      for (Payment payment : appointment.getPayments()) {
+        try {
+          String paymentStatus = payment.getStatus().name();
+          if ("AUTHORIZED".equals(paymentStatus) && payment.getPaypalAuthorizationId() != null) {
+            paymentService.voidPayment(payment.getPaypalAuthorizationId());
+          } else if ("CAPTURED".equals(paymentStatus)
+              && payment.getPaypalCaptureId() != null
+              && adminForcedRefund) {
+            paymentService.refundPayment(payment.getPaypalCaptureId());
+          }
+        } catch (Exception e) {
+          throw new BadRequestException(
+              "PayPal error in payment with id: " + payment.getId() + ": " + e.getMessage());
+        }
+      }
+    }
+  }
+
+  private void forcePenaltyCapture(Appointment appointment) {
+    if (!appointment.getPayments().isEmpty()) {
+      for (Payment payment : appointment.getPayments()) {
+        try {
+          String paymentStatus = payment.getStatus().name();
+          if ("AUTHORIZED".equals(paymentStatus) && payment.getPaypalAuthorizationId() != null) {
+            paymentService.capturePayment(payment.getPaypalAuthorizationId());
+          }
+        } catch (Exception e) {
+          throw new BadRequestException("PayPal error");
+        }
+      }
+    }
   }
 }
