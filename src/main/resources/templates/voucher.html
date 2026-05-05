@@ -1,0 +1,138 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>Comprobante de Turno</title>
+    <style type="text/css">
+      body {
+        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+        color: #333333;
+        margin: 0;
+        padding: 30px;
+        font-size: 14px;
+      }
+      .container {
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 20px;
+        background-color: #fcfcfc;
+      }
+      .header {
+        text-align: center;
+        border-bottom: 2px solid #27ae60; /* Verde nutrición */
+        padding-bottom: 15px;
+        margin-bottom: 20px;
+      }
+      .header h1 {
+        color: #27ae60;
+        margin: 0;
+        font-size: 24px;
+      }
+      .header p {
+        margin: 5px 0 0 0;
+        color: #7f8c8d;
+        font-size: 12px;
+      }
+      .section-title {
+        font-size: 16px;
+        color: #2c3e50;
+        border-bottom: 1px solid #ecf0f1;
+        padding-bottom: 5px;
+        margin-top: 20px;
+        margin-bottom: 10px;
+      }
+      .info-table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      .info-table td {
+        padding: 8px 0;
+        vertical-align: top;
+      }
+      .info-table .label {
+        font-weight: bold;
+        width: 35%;
+        color: #34495e;
+      }
+      .footer {
+        margin-top: 30px;
+        font-size: 11px;
+        color: #95a5a6;
+        text-align: center;
+        border-top: 1px solid #ecf0f1;
+        padding-top: 15px;
+      }
+      .warning-box {
+        background-color: #fff8e1;
+        border-left: 4px solid #f39c12;
+        padding: 10px;
+        margin-top: 20px;
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <!-- CABECERA -->
+      <div class="header">
+        <h1>NutriControl</h1>
+        <p>Salud, Nutrición y Bienestar</p>
+      </div>
+
+      <p>Hola <strong th:text="${patientName}">Nombre del Paciente</strong>,</p>
+      <p>
+        Este documento sirve como comprobante oficial de la reserva de tu turno.
+      </p>
+
+      <!-- DETALLES DEL TURNO -->
+      <div class="section-title">Detalles de la Cita</div>
+      <table class="info-table">
+        <tr>
+          <td class="label">Fecha del turno:</td>
+          <td th:text="${appointmentDate}">01/01/2026</td>
+        </tr>
+        <tr>
+          <td class="label">Hora:</td>
+          <td th:text="${appointmentTime}">15:00 hs</td>
+        </tr>
+        <!--<tr>
+                <td class="label">Servicio:</td>
+                <td th:text="${serviceName}">Consulta Inicial</td>
+            </tr>-->
+        <tr>
+          <td class="label">Profesional:</td>
+          <td th:text="${doctorName}">Lic. Nutrición</td>
+        </tr>
+      </table>
+
+      <!-- DETALLES DEL PAGO -->
+      <div class="section-title">Información de Pago</div>
+      <table class="info-table">
+        <tr>
+          <td class="label">Estado:</td>
+          <td th:text="${paymentStatus}">Abonado por PayPal</td>
+        </tr>
+        <tr>
+          <td class="label">ID de Transacción:</td>
+          <td th:text="${transactionId}">-</td>
+        </tr>
+      </table>
+
+      <!-- RECORDATORIOS -->
+      <div class="warning-box">
+        <strong>Importante:</strong><br />
+        Por favor, presentate 10 minutos antes de tu horario. En caso de no
+        poder asistir, recordá cancelar con al menos 24 horas de anticipación
+        desde nuestro sitio web para evitar recargos o retenciones.
+      </div>
+
+      <!-- PIE DE PÁGINA -->
+      <div class="footer">
+        <p>
+          NutriControl &copy; 2026<br />
+          Av. Ejemplo 123, Consultorio 4 - Contacto: info@nutricontrol.com
+        </p>
+      </div>
+    </div>
+  </body>
+</html>
