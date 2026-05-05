@@ -55,6 +55,12 @@ public class PaymentController {
         }
     }
 
+    @PostMapping("/webhook")
+    public ResponseEntity<Void> handlePayPalWebhook(@RequestBody PayPalWebhookDTO payload){
+        System.out.println("¡Webhook recibido! Evento: " + payload.event_type());
+        paymentService.process
+    }
+
     @PostMapping("/refund")
     public ResponseEntity<String> refundPayment(@Valid @RequestBody PaymentRefundRequestDTO requestDTO) {
         try {

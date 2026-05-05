@@ -1,5 +1,6 @@
 package com.erick.nutricontrol.service;
 
+import com.erick.nutricontrol.dto.payment.PayPalWebhookDTO;
 import com.erick.nutricontrol.dto.payment.PaymentConfirmRequestDTO;
 import com.erick.nutricontrol.dto.payment.PaymentOrderResponseDTO;
 import com.erick.nutricontrol.dto.payment.PaymentRequestDTO;
@@ -13,4 +14,5 @@ public interface PaymentService {
     String capturePayment(String authorizationId) throws IOException, ApiException;
     void voidPayment(String authorizationId) throws IOException, ApiException;
     String refundPayment(String captureId) throws IOException, ApiException;
+    void processWebhook(PayPalWebhookDTO payload);
 }

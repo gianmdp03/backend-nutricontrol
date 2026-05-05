@@ -43,6 +43,9 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private boolean isEmailConfirmed = false;
 
+    @Column(name = "timezone", nullable = false)
+    private String timezone;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "role", length = 20, nullable = false)
     private Role role;

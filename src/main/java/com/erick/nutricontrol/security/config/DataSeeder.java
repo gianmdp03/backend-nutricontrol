@@ -45,6 +45,12 @@ public class DataSeeder {
     @Value("${nutricontrol.initial-user.password}")
     private String userPassword;
 
+    @Value("${nutricontrol.initial-admin.timezone}")
+    private String timezone;
+
+    @Value("${nutricontrol.initial-user.timezone}")
+    private String userTimezone;
+
     @Bean
     CommandLineRunner initDatabase(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         return args -> {

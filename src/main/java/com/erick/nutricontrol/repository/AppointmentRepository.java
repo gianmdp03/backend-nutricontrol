@@ -24,4 +24,5 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
     @Query("SELECT a FROM Appointment a WHERE a.appointmentStatus = 'PENDING' AND (a.date < :today OR (a.date = :today AND a.endTime <= :now))")
     List<Appointment> findExpiredAppointments(@Param("today") LocalDate today, @Param("now") LocalTime now);
     List<Appointment> findByStatusAndCreatedAtBefore(AppointmentStatus appointmentStatus, LocalDateTime dateTime);
+    Page<Appointment> findByAdminAndDateBetween(User admin,  LocalDate startDate, LocalDate endDate, Pageable pageable);
 }

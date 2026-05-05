@@ -7,5 +7,6 @@ public record UserRequestDTO(@NotBlank String name,
                              @NotBlank String lastname,
                              @NotBlank String username,
                              @NotBlank @Email String email,
-                             @NotBlank String password) {
+                             @NotBlank String password,
+                             @NotBlank String timezone) {
 }

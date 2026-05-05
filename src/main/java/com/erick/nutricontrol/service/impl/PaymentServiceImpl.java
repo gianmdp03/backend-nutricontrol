@@ -2,10 +2,7 @@ package com.erick.nutricontrol.service.impl;
 
 import com.erick.nutricontrol._enum.AppointmentStatus;
 import com.erick.nutricontrol._enum.PaymentStatus;
-import com.erick.nutricontrol.dto.payment.PaymentConfirmRequestDTO;
-import com.erick.nutricontrol.dto.payment.PaymentOrderResponseDTO;
-import com.erick.nutricontrol.dto.payment.PaymentRequestDTO;
-import com.erick.nutricontrol.dto.payment.PaymentVoidRequestDTO;
+import com.erick.nutricontrol.dto.payment.*;
 import com.erick.nutricontrol.exception.ConflictException;
 import com.erick.nutricontrol.exception.NotFoundException;
 import com.erick.nutricontrol.model.Appointment;
@@ -28,6 +25,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -204,5 +203,45 @@ public class PaymentServiceImpl implements PaymentService {
     repository.save(payment);
 
     return refund.getId();
+  }
+
+  @Override
+  @Transactional
+  public void processWebhook(PayPalWebhookDTO payload) {
+    String eventType = payload.event_type();
+    String appointmentIdStr = payload.resource().custom_id();
+
+    if (appointmentIdStr == null) return;
+    Long appointmentId = Long.parseLong(appointmentIdStr);
+    Appointment appointment = appointmentRepository.findById(appointmentId).orElseThrow();
+
+    // CASO A: El dinero ha sido retenido (Autorización)
+    if ("PAYMENT.AUTHORIZATION.CREATED".equals(eventType)) {
+      Payment authPayment = new Payment();
+      authPayment.setPaypalOrderId(payload.resource().id());
+      authPayment.setAmount(new BigDecimal(payload.resource().amount().value()));
+      authPayment.setStatus(PaymentStatus.AUTHORIZED);
+      authPayment.setDate(LocalDateTime.now());
+      authPayment.setAppointment(appointment);
+
+      appointment.getPayments().add(authPayment);
+      appointment.setAppointmentStatus(AppointmentStatus.CONFIRMED);
+      appointmentRepository.save(appointment);
+    }
+
+    // CASO B: Han pasado las 24hs y capturamos el dinero
+    else if ("PAYMENT.CAPTURE.COMPLETED".equals(eventType)) {
+      // Buscamos el pago que estaba AUTHORIZED para pasarlo a CAPTURED
+      appointment.getPayments().stream()
+              .filter(p -> p.getStatus() == PaymentStatus.AUTHORIZED)
+              .findFirst()
+              .ifPresent(p -> {
+                p.setStatus(PaymentStatus.CAPTURED);
+                p.setPaymentDate(LocalDateTime.now());
+              });
+
+      appointmentRepository.save(appointment);
+
+    }
   }
 }

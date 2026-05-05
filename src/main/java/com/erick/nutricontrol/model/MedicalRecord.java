@@ -7,6 +7,7 @@ import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 @Entity
 @Getter
@@ -32,7 +33,7 @@ public class MedicalRecord {
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
-    private LocalDateTime creationDate;
+    private OffsetDateTime creationDate;
 
     public MedicalRecord(Double weight, Double height, String medicalHistory, String medication) {
         this.weight = weight;

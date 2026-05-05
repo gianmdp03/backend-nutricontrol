@@ -2,6 +2,7 @@ package com.erick.nutricontrol.service;
 
 import com.erick.nutricontrol.dto.appointment.AppointmentDetailDTO;
 import com.erick.nutricontrol.dto.appointment.AppointmentRequestDTO;
+import com.erick.nutricontrol.dto.appointment.AvailableSlotDTO;
 import com.erick.nutricontrol.dto.payment.PaymentOrderResponseDTO;
 import com.paypal.sdk.exceptions.ApiException;
 import org.springframework.data.domain.Page;
@@ -15,7 +16,7 @@ import java.util.Map;
 
 public interface AppointmentService{
     PaymentOrderResponseDTO addAppointment(String username, AppointmentRequestDTO dto) throws IOException, ApiException;
-    Map<LocalDate, List<LocalTime>> getAvailableAppointments();
+    List<AvailableSlotDTO> getAvailableAppointments();
     Page<AppointmentDetailDTO> listUserAppointments(String username, Pageable pageable);
     Page<AppointmentDetailDTO> listAdminAppointments(String username, Pageable pageable);
     void deleteAppointment(Long id);

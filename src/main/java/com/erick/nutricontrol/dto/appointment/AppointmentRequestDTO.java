@@ -5,8 +5,8 @@ import jakarta.validation.constraints.NotNull;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.OffsetDateTime;
 
 public record AppointmentRequestDTO(
-    @NotNull @FutureOrPresent LocalDate date,
-    @NotNull LocalTime startTime,
-    @NotNull Long adminId) {}
+        @NotNull @FutureOrPresent OffsetDateTime startTime,
+        @NotNull Long adminId) {}

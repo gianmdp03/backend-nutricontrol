@@ -7,6 +7,7 @@ public record UserDetailDTO(
     String email,
     String username,
     String role,
+    String timezone,
     boolean banned,
     boolean isEmailConfirmed,
     String profilePicture) {}

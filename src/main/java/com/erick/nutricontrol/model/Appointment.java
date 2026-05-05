@@ -10,6 +10,7 @@ import lombok.Setter;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -48,7 +49,7 @@ public class Appointment {
     private AppointmentStatus appointmentStatus;
 
     @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    private OffsetDateTime createdAt;
 
     public Appointment(LocalDate date, LocalTime startTime, LocalTime endTime, User user, User admin, AppointmentStatus appointmentStatus) {
         this.date = date;
@@ -61,6 +62,6 @@ public class Appointment {
 
     @PrePersist
     protected void onCreate(){
-        this.createdAt = LocalDateTime.now();
+        this.createdAt = OffsetDateTime.now();
     }
 }
