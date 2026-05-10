@@ -1,5 +1,6 @@
 package com.erick.nutricontrol.exception;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -41,5 +42,14 @@ public class GlobalExceptionHandler {
     {
         ErrorResponse error = new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(), ex.getMessage());
         return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorResponse> handleDataIntegrityViolationException(DataIntegrityViolationException ex) {
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.CONFLICT.value(),
+                "Conflicto de reserva",
+                "Lo sentimos, este turno acaba de ser reservado por otra persona hace instantes. Por favor, seleccioná otro horario."
+        );
+        return new ResponseEntity<>(error, HttpStatus.CONFLICT);
     }
 }

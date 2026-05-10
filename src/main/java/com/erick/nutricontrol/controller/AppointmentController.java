@@ -2,7 +2,10 @@ package com.erick.nutricontrol.controller;
 
 import com.erick.nutricontrol.dto.appointment.AppointmentDetailDTO;
 import com.erick.nutricontrol.dto.appointment.AppointmentRequestDTO;
+import com.erick.nutricontrol.dto.appointment.AvailableSlotDTO;
+import com.erick.nutricontrol.dto.payment.PaymentOrderResponseDTO;
 import com.erick.nutricontrol.service.AppointmentService;
+import com.paypal.sdk.exceptions.ApiException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -13,6 +16,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
@@ -26,13 +30,13 @@ public class AppointmentController {
 
     @PreAuthorize("hasAuthority('ROLE_PATIENT')")
     @PostMapping
-    public ResponseEntity<AppointmentDetailDTO> addAppointment(Authentication authentication, @Valid @RequestBody AppointmentRequestDTO dto) {
+    public ResponseEntity<PaymentOrderResponseDTO> addAppointment(Authentication authentication, @Valid @RequestBody AppointmentRequestDTO dto) throws IOException, ApiException {
         return ResponseEntity.status(HttpStatus.CREATED).body(service.addAppointment(authentication.getName(), dto));
     }
 
     @PreAuthorize("hasAuthority('ROLE_PATIENT')")
     @GetMapping("/available")
-    public ResponseEntity<Map<LocalDate, List<LocalTime>>> getAvailableAppointments() {
+    public ResponseEntity<List<AvailableSlotDTO>> getAvailableAppointments() {
         return ResponseEntity.status(HttpStatus.OK).body(service.getAvailableAppointments());
     }
 

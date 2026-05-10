@@ -14,7 +14,7 @@ import java.time.LocalTime;
 @Setter
 @Table(
     name = "schedule_rule",
-    uniqueConstraints = {@UniqueConstraint(columnNames = {"dayOfWeek", "startTime"})})
+    uniqueConstraints = {@UniqueConstraint(columnNames = {"dayOfWeek", "startTime", "admin_id"})})
 @NoArgsConstructor
 public class ScheduleRule {
   @Id
@@ -31,12 +31,11 @@ public class ScheduleRule {
   @Column(nullable = false)
   private LocalTime endTime;
 
-  @ManyToOne
+  @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "admin_id")
   private User admin;
 
-  public ScheduleRule(
-      DayOfWeek dayOfWeek, LocalTime startTime, LocalTime endTime, User admin) {
+  public ScheduleRule(DayOfWeek dayOfWeek, LocalTime startTime, LocalTime endTime, User admin) {
     this.dayOfWeek = dayOfWeek;
     this.startTime = startTime;
     this.endTime = endTime;

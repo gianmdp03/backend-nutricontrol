@@ -17,11 +17,11 @@ public class PDFGeneratorServiceImpl implements PDFGeneratorService {
     }
 
     @Override
-    public byte[] generateAppointmentReceipt(String patientName, String date, String doctorName) throws Exception {
+    public byte[] generateAppointmentReceipt(String patientName, String date, String time, String doctorName) throws Exception {
         Context context = new Context();
         context.setVariable("patientName", patientName);
         context.setVariable("appointmentDate", date);
-        context.setVariable("appointmentTime", date);
+        context.setVariable("appointmentTime", time);
         context.setVariable("doctorName", doctorName);
 
         String htmlContent = templateEngine.process("voucher", context);

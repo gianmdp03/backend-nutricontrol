@@ -9,10 +9,25 @@ import com.paypal.sdk.exceptions.ApiException;
 import java.io.IOException;
 
 public interface PaymentService {
-    PaymentOrderResponseDTO createPaymentHold(PaymentRequestDTO paymentRequestDTO) throws IOException, ApiException;
-    void confirmPaymentHold(PaymentConfirmRequestDTO confirmDTO) throws Exception;
-    String capturePayment(String authorizationId) throws IOException, ApiException;
-    void voidPayment(String authorizationId) throws IOException, ApiException;
-    String refundPayment(String captureId) throws IOException, ApiException;
-    void processWebhook(PayPalWebhookDTO payload);
+  PaymentOrderResponseDTO createPaymentHold(PaymentRequestDTO paymentRequestDTO)
+      throws IOException, ApiException;
+
+  void confirmPaymentHold(PaymentConfirmRequestDTO confirmDTO) throws Exception;
+
+  String capturePayment(String authorizationId) throws IOException, ApiException;
+
+  void voidPayment(String authorizationId) throws IOException, ApiException;
+
+  String refundPayment(String captureId) throws IOException, ApiException;
+
+  void processWebhook(PayPalWebhookDTO payload);
+
+  boolean verifyWebhookSignature(
+      String authAlgo,
+      String certUrl,
+      String transmissionId,
+      String transmissionSig,
+      String transmissionTime,
+      String rawPayload)
+      throws Exception;
 }

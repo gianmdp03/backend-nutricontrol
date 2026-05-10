@@ -74,15 +74,21 @@ public class AppointmentServiceImpl implements AppointmentService {
     LocalTime doctorStartTime = zdtStart.toLocalTime();
     LocalTime doctorEndTime = doctorStartTime.plusMinutes(this.durationMinutes);
 
+    LocalDate globalStart = LocalDate.now(ZoneOffset.UTC).minusDays(1);
+    LocalDate globalEnd = LocalDate.now(ZoneOffset.UTC).plusDays(days + 2);
 
-    Map<LocalDate, List<LocalTime>> availableSlots = calculateSingleAdminAvailability(admin);
+    List<ScheduleRule> adminRules = scheduleRuleRepository.findByAdminIn(List.of(admin));
+    List<ScheduleException> adminExceptions = scheduleExceptionRepository.findByAdminIn(List.of(admin));
+    List<Appointment> adminBooked = repository.findByAdminInAndDateBetween(List.of(admin), globalStart, globalEnd);
+
+    Map<LocalDate, List<LocalTime>> availableSlots = calculateInMemoryAvailability(admin, adminRules, adminExceptions, adminBooked);
+
     List<LocalTime> slotsForRequestedDate = availableSlots.getOrDefault(doctorDate, Collections.emptyList());
 
     if (!slotsForRequestedDate.contains(doctorStartTime)) {
       throw new BadRequestException("El turno seleccionado ya no está disponible.");
     }
 
-    // 3. Guardar usando la fecha/hora local del médico (lo que espera tu DB actual)
     Appointment appointment = mapper.toEntity(dto);
     appointment.setDate(doctorDate);
     appointment.setStartTime(doctorStartTime);
@@ -90,7 +96,8 @@ public class AppointmentServiceImpl implements AppointmentService {
     appointment.setUser(user);
     appointment.setAdmin(admin);
     appointment.setAppointmentStatus(AppointmentStatus.PENDING);
-
+    appointment.setStartTimeUtc(dto.startTime());
+    appointment.setEndTimeUtc(dto.startTime().plusMinutes(this.durationMinutes));
     appointment = repository.save(appointment);
 
     return paymentService.createPaymentHold(new PaymentRequestDTO(appointment.getId()));
@@ -98,11 +105,29 @@ public class AppointmentServiceImpl implements AppointmentService {
 
   @Override
   public List<AvailableSlotDTO> getAvailableAppointments() {
+    List<User> admins = userRepository.findByRole(Role.ROLE_ADMIN);
+    if (admins.isEmpty()) return Collections.emptyList();
+
+    LocalDate globalStart = LocalDate.now(ZoneOffset.UTC).minusDays(1);
+    LocalDate globalEnd = LocalDate.now(ZoneOffset.UTC).plusDays(days + 2);
+
+    List<ScheduleRule> allRules = scheduleRuleRepository.findByAdminIn(admins);
+    List<ScheduleException> allExceptions = scheduleExceptionRepository.findByAdminIn(admins);
+    List<Appointment> allBooked = repository.findByAdminInAndDateBetween(admins, globalStart, globalEnd);
+
+    Map<Long, List<ScheduleRule>> rulesByAdmin = allRules.stream().collect(Collectors.groupingBy(r -> r.getAdmin().getId()));
+    Map<Long, List<ScheduleException>> exceptionsByAdmin = allExceptions.stream().collect(Collectors.groupingBy(e -> e.getAdmin().getId()));
+    Map<Long, List<Appointment>> bookedByAdmin = allBooked.stream().collect(Collectors.groupingBy(a -> a.getAdmin().getId()));
+
     List<AvailableSlotDTO> globalAvailableSlots = new ArrayList<>();
-    List<User> admins = userRepository.findByRole(Role.ROLE_ADMIN); //
 
     for (User admin : admins) {
-      Map<LocalDate, List<LocalTime>> availability = calculateSingleAdminAvailability(admin);
+      Long adminId = admin.getId();
+      List<ScheduleRule> adminRules = rulesByAdmin.getOrDefault(adminId, Collections.emptyList());
+      List<ScheduleException> adminExceptions = exceptionsByAdmin.getOrDefault(adminId, Collections.emptyList());
+      List<Appointment> adminBooked = bookedByAdmin.getOrDefault(adminId, Collections.emptyList());
+
+      Map<LocalDate, List<LocalTime>> availability = calculateInMemoryAvailability(admin, adminRules, adminExceptions, adminBooked);
       ZoneId doctorZone = ZoneId.of(admin.getTimezone() != null ? admin.getTimezone() : "America/Santo_Domingo");
 
       for (Map.Entry<LocalDate, List<LocalTime>> entry : availability.entrySet()) {
@@ -123,20 +148,18 @@ public class AppointmentServiceImpl implements AppointmentService {
     return globalAvailableSlots;
   }
 
-  private Map<LocalDate, List<LocalTime>> calculateSingleAdminAvailability(User admin) {
+  private Map<LocalDate, List<LocalTime>> calculateInMemoryAvailability(User admin, List<ScheduleRule> rules, List<ScheduleException> exceptions, List<Appointment> booked) {
     String tz = admin.getTimezone() != null ? admin.getTimezone() : "America/Santo_Domingo";
     ZoneId doctorZone = ZoneId.of(tz);
     LocalDate today = LocalDate.now(doctorZone);
-    LocalDate endDate = today.plusDays(days);
-    Pageable unpaged = PageRequest.of(0, 1000);
 
-    List<ScheduleRule> rules = scheduleRuleRepository.findByAdmin(admin, unpaged).getContent();
-    List<ScheduleException> exceptions = scheduleExceptionRepository.findByAdmin(admin, unpaged).getContent();
-    List<Appointment> booked = repository.findByAdminAndDateBetween(admin, today, endDate, unpaged).getContent();
-
-    Map<LocalDate, Set<LocalTime>> bookedSlotsPerDay = booked.stream()
-            .collect(Collectors.groupingBy(Appointment::getDate,
-                    Collectors.mapping(Appointment::getStartTime, Collectors.toSet())));
+    Map<LocalDate, Set<LocalTime>> occupiedSlotsPerDay = new HashMap<>();
+    for (Appointment app : booked) {
+      LocalDate d = app.getDate();
+      occupiedSlotsPerDay.putIfAbsent(d, new HashSet<>());
+      List<LocalTime> appSlots = calculateMinutes(app.getStartTime(), app.getEndTime(), minutesGap);
+      occupiedSlotsPerDay.get(d).addAll(appSlots);
+    }
 
     Map<LocalDate, List<LocalTime>> availability = new TreeMap<>();
 
@@ -144,29 +167,36 @@ public class AppointmentServiceImpl implements AppointmentService {
       LocalDate currentDate = today.plusDays(i);
       List<LocalTime> dailySlots = new ArrayList<>();
 
-      rules.stream()
+      List<ScheduleRule> rulesForDay = rules.stream()
               .filter(r -> r.getDayOfWeek().equals(currentDate.getDayOfWeek()))
-              .findFirst()
-              .ifPresent(rule -> {
-                dailySlots.addAll(calculateMinutes(rule.getStartTime(), rule.getEndTime(), minutesGap));
+              .toList();
 
-                // Aplicar excepciones
-                exceptions.stream()
-                        .filter(ex -> ex.getDate().equals(currentDate))
-                        .findFirst()
-                        .ifPresent(ex -> {
-                          if (ex.getStartTime().equals(ex.getEndTime())) dailySlots.clear();
-                          else dailySlots.removeAll(calculateMinutes(ex.getStartTime(), ex.getEndTime(), minutesGap));
-                        });
-              });
+      for (ScheduleRule rule : rulesForDay) {
+        dailySlots.addAll(calculateMinutes(rule.getStartTime(), rule.getEndTime(), minutesGap));
+      }
+
+      List<ScheduleException> exceptionsForDay = exceptions.stream()
+              .filter(ex -> ex.getDate().equals(currentDate))
+              .toList();
+
+      for (ScheduleException ex : exceptionsForDay) {
+        if (ex.getStartTime().equals(ex.getEndTime())) {
+          dailySlots.clear();
+          break;
+        } else {
+          dailySlots.removeAll(calculateMinutes(ex.getStartTime(), ex.getEndTime(), minutesGap));
+        }
+      }
 
       if (!dailySlots.isEmpty()) {
         if (currentDate.equals(today)) {
           LocalTime now = LocalTime.now(doctorZone);
           dailySlots.removeIf(slot -> slot.isBefore(now));
         }
-        dailySlots.removeAll(bookedSlotsPerDay.getOrDefault(currentDate, Collections.emptySet()));
-        if (!dailySlots.isEmpty()) availability.put(currentDate, dailySlots);
+        dailySlots.removeAll(occupiedSlotsPerDay.getOrDefault(currentDate, Collections.emptySet()));
+
+        List<LocalTime> uniqueSlots = dailySlots.stream().distinct().sorted().toList();
+        if (!uniqueSlots.isEmpty()) availability.put(currentDate, new ArrayList<>(uniqueSlots));
       }
     }
     return availability;
@@ -213,9 +243,8 @@ public class AppointmentServiceImpl implements AppointmentService {
   public void deleteAppointment(Long id) {
     Appointment appointment =
         repository.findById(id).orElseThrow(() -> new NotFoundException("Appointment not found"));
-    OffsetDateTime appointmentDateTime =
-        OffsetDateTime.of(appointment.getDate(), appointment.getStartTime(), ZoneOffset.UTC);
-    boolean isMoreThan24HoursAhead = OffsetDateTime.now().plusHours(24).isBefore(appointmentDateTime);
+    OffsetDateTime appointmentDateTime = appointment.getStartTimeUtc();
+    boolean isMoreThan24HoursAhead = OffsetDateTime.now(ZoneOffset.UTC).plusHours(24).isBefore(appointmentDateTime);
     if (isMoreThan24HoursAhead) {
       processRefundIfApply(appointment, false);
     }
@@ -230,9 +259,8 @@ public class AppointmentServiceImpl implements AppointmentService {
   public void adminDeleteAppointment(Long id, boolean refund) {
     Appointment appointment =
         repository.findById(id).orElseThrow(() -> new NotFoundException("Appointment not found"));
-    OffsetDateTime appointmentDateTime =
-            OffsetDateTime.of(appointment.getDate(), appointment.getStartTime(), ZoneOffset.UTC);
-    boolean isMoreThan24HoursAhead = OffsetDateTime.now().plusHours(24).isAfter(appointmentDateTime);
+    OffsetDateTime appointmentDateTime = appointment.getStartTimeUtc();
+    boolean isMoreThan24HoursAhead = OffsetDateTime.now(ZoneOffset.UTC).plusHours(24).isBefore(appointmentDateTime);
     boolean finalRefundDecision = isMoreThan24HoursAhead || refund;
 
     processRefundIfApply(appointment, finalRefundDecision);

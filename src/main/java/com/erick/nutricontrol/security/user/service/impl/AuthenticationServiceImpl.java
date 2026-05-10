@@ -66,6 +66,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             user.getEmail(),
             user.getUsername(),
             user.getRole().name(),
+            user.getTimezone(),
             user.isBanned(),
             user.isEmailConfirmed(),
             null);
@@ -88,6 +89,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             user.getEmail(),
             user.getUsername(),
             user.getRole().name(),
+                user.getTimezone(),
             user.isBanned(),
             user.isEmailConfirmed(),
             null);
@@ -198,6 +200,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 user.getEmail(),
                 user.getUsername(),
                 user.getRole().name(),
+                    user.getTimezone(),
                 user.isBanned(),
                 user.isEmailConfirmed(),
                 user.getProfilePicture()));
@@ -218,6 +221,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 user.getEmail(),
                 user.getUsername(),
                 user.getRole().name(),
+                    user.getTimezone(),
                 user.isBanned(),
                 user.isEmailConfirmed(),
                 user.getProfilePicture()));
@@ -236,6 +240,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
               user.getEmail(),
               user.getUsername(),
               user.getRole().name(),
+              user.getTimezone(),
               user.isBanned(),
               user.isEmailConfirmed(),
               user.getProfilePicture()));
@@ -256,6 +261,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 user.getEmail(),
                 user.getUsername(),
                 user.getRole().name(),
+                    user.getTimezone(),
                 user.isBanned(),
                 user.isEmailConfirmed(),
                 user.getProfilePicture()));
@@ -276,6 +282,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 user.getEmail(),
                 user.getUsername(),
                 user.getRole().name(),
+                    user.getTimezone(),
                 user.isBanned(),
                 user.isEmailConfirmed(),
                 user.getProfilePicture()));
@@ -296,6 +303,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 user.getEmail(),
                 user.getUsername(),
                 user.getRole().name(),
+                    user.getTimezone(),
                 user.isBanned(),
                 user.isEmailConfirmed(),
                 user.getProfilePicture()));
@@ -314,6 +322,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         user.getEmail(),
         user.getUsername(),
         user.getRole().name(),
+            user.getTimezone(),
         user.isBanned(),
         user.isEmailConfirmed(),
         user.getProfilePicture());
@@ -349,6 +358,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         user.getEmail(),
         user.getUsername(),
         user.getRole().name(),
+            user.getTimezone(),
         user.isBanned(),
         user.isEmailConfirmed(),
         user.getProfilePicture());

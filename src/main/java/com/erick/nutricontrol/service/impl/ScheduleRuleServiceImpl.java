@@ -32,23 +32,32 @@ public class ScheduleRuleServiceImpl implements ScheduleRuleService {
   @Override
   @Transactional
   public ScheduleRuleDetailDTO addScheduleRule(String username, ScheduleRuleRequestDTO dto) {
-    if(dto.startTime().isAfter(dto.endTime()) || dto.startTime().equals(dto.endTime())) {
-      throw new BadRequestException("Invalid start and end time");
+
+    if (!dto.endTime().isAfter(dto.startTime())) {
+      throw new BadRequestException("El horario de fin debe ser posterior al horario de inicio. Si trabaja cruzando la medianoche, cree dos reglas (Ej: 22:00 a 23:59 y 00:00 a 02:00).");
     }
-    User user = userRepository.findByUsername(username).orElseThrow(() -> new NotFoundException("User not found"));
-    List<ScheduleRule> list = repository.findByDayOfWeek(dto.dayOfWeek());
+
+    User user = userRepository.findByUsername(username)
+            .orElseThrow(() -> new NotFoundException("User not found"));
+
+    List<ScheduleRule> list = repository.findByAdminAndDayOfWeek(user, dto.dayOfWeek());
+
     LocalTime newStart = dto.startTime();
     LocalTime newEnd = dto.endTime();
+
     for (ScheduleRule existing : list) {
-      boolean overlaps =
-          newStart.isBefore(existing.getStartTime()) && newEnd.isAfter(existing.getEndTime());
+      boolean overlaps = newStart.isBefore(existing.getEndTime()) && existing.getStartTime().isBefore(newEnd);
+
       if (overlaps) {
-        throw new ConflictException("Schedule Rule already exists");
+        throw new ConflictException("Ya existe una regla de horario que se superpone con este rango ("
+                + existing.getStartTime() + " a " + existing.getEndTime() + ").");
       }
     }
+
     ScheduleRule scheduleRule = mapper.toEntity(dto);
     scheduleRule.setAdmin(user);
     scheduleRule = repository.save(scheduleRule);
+
     return mapper.toDetailDTO(scheduleRule);
   }
 

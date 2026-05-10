@@ -3,6 +3,7 @@ package com.erick.nutricontrol.controller;
 import com.erick.nutricontrol.dto.scheduleRule.ScheduleRuleDetailDTO;
 import com.erick.nutricontrol.dto.scheduleRule.ScheduleRuleRequestDTO;
 import com.erick.nutricontrol.dto.scheduleRule.ScheduleRuleUpdateDTO;
+import com.erick.nutricontrol.exception.BadRequestException;
 import com.erick.nutricontrol.service.ScheduleRuleService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

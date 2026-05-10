@@ -12,6 +12,7 @@ import com.erick.nutricontrol.repository.PaymentRepository;
 import com.erick.nutricontrol.service.EmailService;
 import com.erick.nutricontrol.service.PDFGeneratorService;
 import com.erick.nutricontrol.service.PaymentService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.paypal.sdk.PaypalServerSdkClient;
 import com.paypal.sdk.controllers.OrdersController;
 import com.paypal.sdk.controllers.PaymentsController;
@@ -19,19 +20,26 @@ import com.paypal.sdk.exceptions.ApiException;
 import com.paypal.sdk.http.response.ApiResponse;
 import com.paypal.sdk.models.*;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
+@Slf4j
 public class PaymentServiceImpl implements PaymentService {
   private final PaypalServerSdkClient paypalClient;
   private final PaymentRepository repository;
@@ -44,6 +52,12 @@ public class PaymentServiceImpl implements PaymentService {
 
   @Value("${paypal.cancel-url}")
   private String cancelUrl;
+
+  @Value("${paypal.webhook.id}")
+  private String webhookId;
+
+  @Value("${paypal.mode}")
+  private String mode;
 
   @Override
   @Transactional
@@ -64,6 +78,7 @@ public class PaymentServiceImpl implements PaymentService {
         new PurchaseUnitRequest.Builder()
             .amount(amountBreakdown)
             .description("Reserva de turno médico #" + appointment.getId())
+            .customId(appointment.getId().toString())
             .build();
 
     OrderApplicationContext applicationContext =
@@ -88,7 +103,8 @@ public class PaymentServiceImpl implements PaymentService {
             .map(LinkDescription::getHref)
             .orElseThrow(() -> new NotFoundException("Payment link not found"));
 
-    Payment payment = Payment.builder()
+    Payment payment =
+        Payment.builder()
             .appointment(appointment)
             .amount(amount)
             .currency("USD")
@@ -103,7 +119,10 @@ public class PaymentServiceImpl implements PaymentService {
   @Override
   @Transactional
   public void confirmPaymentHold(PaymentConfirmRequestDTO confirmDTO) throws Exception {
-    Payment payment = repository.findByPaypalOrderId(confirmDTO.paypalOrderId()).orElseThrow(() -> new NotFoundException("Payment not found"));
+    Payment payment =
+        repository
+            .findByPaypalOrderId(confirmDTO.paypalOrderId())
+            .orElseThrow(() -> new NotFoundException("Payment not found"));
     Appointment appointment = payment.getAppointment();
     OrdersController ordersController = paypalClient.getOrdersController();
 
@@ -115,22 +134,24 @@ public class PaymentServiceImpl implements PaymentService {
 
     OrderAuthorizeResponse orderAuthorizeResponse = apiResponse.getResult();
 
-    String authorizationId = orderAuthorizeResponse
-        .getPurchaseUnits()
-        .getFirst()
-        .getPayments()
-        .getAuthorizations()
-        .getFirst()
-        .getId();
-
-    if(appointment.getAppointmentStatus().equals(AppointmentStatus.CANCELLED)){
-      this.voidPayment(authorizationId);
-      throw new ConflictException("El tiempo para pagar expiró y el turno fue liberado. Hemos anulado la retención y los fondos no se cobrarán.");
-    }
+    String authorizationId =
+        orderAuthorizeResponse
+            .getPurchaseUnits()
+            .getFirst()
+            .getPayments()
+            .getAuthorizations()
+            .getFirst()
+            .getId();
 
     payment.setPaypalAuthorizationId(authorizationId);
     payment.setStatus(PaymentStatus.AUTHORIZED);
     repository.save(payment);
+
+    if (appointment.getAppointmentStatus().equals(AppointmentStatus.CANCELLED)) {
+      this.voidPayment(authorizationId);
+      throw new ConflictException(
+          "El tiempo para pagar expiró y el turno fue liberado. Hemos anulado la retención y los fondos no se cobrarán.");
+    }
 
     appointment.setAppointmentStatus(AppointmentStatus.CONFIRMED);
     appointmentRepository.save(appointment);
@@ -138,20 +159,31 @@ public class PaymentServiceImpl implements PaymentService {
     String patientName = appointment.getUser().getName();
     String patientEmail = appointment.getUser().getEmail();
     String appointmentDate = appointment.getDate().toString();
+    String appointmentTime = appointment.getStartTime().toString();
     String doctorName = appointment.getAdmin().getName();
 
-    byte[] pdfBytes = pdfGeneratorService.generateAppointmentReceipt(patientName, appointmentDate, doctorName);
+    try {
+      byte[] pdfBytes =
+          pdfGeneratorService.generateAppointmentReceipt(patientName, appointmentDate, appointmentTime, doctorName);
+      String subject = "NutriControl - Comprobante de reserva de turno";
+      String body =
+          "Hola "
+              + patientName
+              + ",\n\nAdjuntamos el comprobante de tu turno confirmado.\n¡Te esperamos!";
 
-    String subject = "NutriControl - Comprobante de reserva de turno";
-    String body = "Hola " + patientName + ",\n\nAdjuntamos el comprobante de tu turno confirmado.\n¡Te esperamos!";
-
-    emailService.sendEmailWithReceipt(patientEmail, subject, body, pdfBytes);
+      emailService.sendEmailWithReceipt(patientEmail, subject, body, pdfBytes);
+    } catch (Exception e) {
+      log.error("Voucher failed", e);
+    }
   }
 
   @Override
   @Transactional
   public String capturePayment(String authorizationId) throws IOException, ApiException {
-    Payment payment = repository.findByPaypalAuthorizationId(authorizationId).orElseThrow(() -> new NotFoundException("Payment not found"));
+    Payment payment =
+        repository
+            .findByPaypalAuthorizationId(authorizationId)
+            .orElseThrow(() -> new NotFoundException("Payment not found"));
     PaymentsController paymentsController = paypalClient.getPaymentsController();
 
     CaptureAuthorizedPaymentInput captureInput =
@@ -172,7 +204,10 @@ public class PaymentServiceImpl implements PaymentService {
   @Override
   @Transactional
   public void voidPayment(String authorizationId) throws IOException, ApiException {
-    Payment payment = repository.findByPaypalAuthorizationId(authorizationId).orElseThrow(() -> new NotFoundException("Payment not found"));
+    Payment payment =
+        repository
+            .findByPaypalAuthorizationId(authorizationId)
+            .orElseThrow(() -> new NotFoundException("Payment not found"));
     PaymentsController paymentsController = paypalClient.getPaymentsController();
 
     VoidPaymentInput voidInput =
@@ -187,7 +222,10 @@ public class PaymentServiceImpl implements PaymentService {
   @Override
   @Transactional
   public String refundPayment(String captureId) throws IOException, ApiException {
-    Payment payment = repository.findByPaypalCaptureId(captureId).orElseThrow(() -> new NotFoundException("Payment not found"));
+    Payment payment =
+        repository
+            .findByPaypalCaptureId(captureId)
+            .orElseThrow(() -> new NotFoundException("Payment not found"));
 
     PaymentsController paymentsController = paypalClient.getPaymentsController();
 
@@ -212,36 +250,80 @@ public class PaymentServiceImpl implements PaymentService {
     String appointmentIdStr = payload.resource().custom_id();
 
     if (appointmentIdStr == null) return;
+
     Long appointmentId = Long.parseLong(appointmentIdStr);
-    Appointment appointment = appointmentRepository.findById(appointmentId).orElseThrow();
+    Appointment appointment = appointmentRepository.findById(appointmentId).orElse(null);
+    if (appointment == null) return;
 
-    // CASO A: El dinero ha sido retenido (Autorización)
     if ("PAYMENT.AUTHORIZATION.CREATED".equals(eventType)) {
-      Payment authPayment = new Payment();
-      authPayment.setPaypalOrderId(payload.resource().id());
-      authPayment.setAmount(new BigDecimal(payload.resource().amount().value()));
-      authPayment.setStatus(PaymentStatus.AUTHORIZED);
-      authPayment.setDate(LocalDateTime.now());
-      authPayment.setAppointment(appointment);
+      appointment.getPayments().stream()
+          .filter(p -> p.getStatus() == PaymentStatus.PENDING)
+          .findFirst()
+          .ifPresent(
+              p -> {
+                p.setPaypalAuthorizationId(payload.resource().id());
+                p.setStatus(PaymentStatus.AUTHORIZED);
+                repository.save(p);
+              });
 
-      appointment.getPayments().add(authPayment);
       appointment.setAppointmentStatus(AppointmentStatus.CONFIRMED);
       appointmentRepository.save(appointment);
-    }
-
-    // CASO B: Han pasado las 24hs y capturamos el dinero
-    else if ("PAYMENT.CAPTURE.COMPLETED".equals(eventType)) {
-      // Buscamos el pago que estaba AUTHORIZED para pasarlo a CAPTURED
+    } else if ("PAYMENT.CAPTURE.COMPLETED".equals(eventType)) {
       appointment.getPayments().stream()
-              .filter(p -> p.getStatus() == PaymentStatus.AUTHORIZED)
-              .findFirst()
-              .ifPresent(p -> {
+          .filter(p -> p.getStatus() == PaymentStatus.AUTHORIZED || p.getStatus() == PaymentStatus.PENDING)
+          .findFirst()
+          .ifPresent(
+              p -> {
+                p.setPaypalCaptureId(payload.resource().id());
                 p.setStatus(PaymentStatus.CAPTURED);
-                p.setPaymentDate(LocalDateTime.now());
+                repository.save(p);
               });
 
       appointmentRepository.save(appointment);
+    }
+  }
 
+  @Override
+  public boolean verifyWebhookSignature(
+      String authAlgo,
+      String certUrl,
+      String transmissionId,
+      String transmissionSig,
+      String transmissionTime,
+      String rawPayload)
+      throws Exception {
+
+    String baseUrl =
+        mode.equalsIgnoreCase("sandbox")
+            ? "https://api-m.sandbox.paypal.com"
+            : "https://api-m.paypal.com";
+    String url = baseUrl + "/v1/notifications/verify-webhook-signature";
+
+    Map<String, Object> body = new HashMap<>();
+    body.put("auth_algo", authAlgo);
+    body.put("cert_url", certUrl);
+    body.put("transmission_id", transmissionId);
+    body.put("transmission_sig", transmissionSig);
+    body.put("transmission_time", transmissionTime);
+    body.put("webhook_id", webhookId);
+
+    ObjectMapper mapper = new ObjectMapper();
+    body.put("webhook_event", mapper.readValue(rawPayload, Object.class));
+
+    HttpHeaders headers = new HttpHeaders();
+    headers.setContentType(MediaType.APPLICATION_JSON);
+
+    HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
+    RestTemplate restTemplate = new RestTemplate();
+
+    try {
+      ResponseEntity<Map> response = restTemplate.postForEntity(url, entity, Map.class);
+      Map<String, String> responseBody = response.getBody();
+
+      return responseBody != null && "SUCCESS".equals(responseBody.get("verification_status"));
+
+    } catch (Exception e) {
+      throw new Exception("Error comunicándose con el validador de PayPal", e);
     }
   }
 }

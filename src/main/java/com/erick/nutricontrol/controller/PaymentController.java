@@ -3,14 +3,19 @@ package com.erick.nutricontrol.controller;
 import com.erick.nutricontrol.dto.payment.* ;
 import com.erick.nutricontrol.exception.BadRequestException;
 import com.erick.nutricontrol.service.PaymentService;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/payments")
 @RequiredArgsConstructor
+@Slf4j
 public class PaymentController {
     private final PaymentService paymentService;
 
@@ -56,9 +61,37 @@ public class PaymentController {
     }
 
     @PostMapping("/webhook")
-    public ResponseEntity<Void> handlePayPalWebhook(@RequestBody PayPalWebhookDTO payload){
-        System.out.println("¡Webhook recibido! Evento: " + payload.event_type());
-        paymentService.process
+    public ResponseEntity<Void> handlePayPalWebhook(
+            @RequestHeader("paypal-auth-algo") String authAlgo,
+            @RequestHeader("paypal-cert-url") String certUrl,
+            @RequestHeader("paypal-transmission-id") String transmissionId,
+            @RequestHeader("paypal-transmission-sig") String transmissionSig,
+            @RequestHeader("paypal-transmission-time") String transmissionTime,
+            @RequestBody String rawPayload) {
+
+        log.info("Webhook recibido. Validando firma de seguridad...");
+
+        try {
+            boolean isValid = paymentService.verifyWebhookSignature(
+                    authAlgo, certUrl, transmissionId, transmissionSig, transmissionTime, rawPayload
+            );
+
+            if (!isValid) {
+                System.err.println("ALERTA: Firma de webhook inválida. Ignorando petición.");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            }
+
+            ObjectMapper mapper = new ObjectMapper();
+            mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+            PayPalWebhookDTO payload = mapper.readValue(rawPayload, PayPalWebhookDTO.class);
+
+            paymentService.processWebhook(payload);
+            return ResponseEntity.ok().build();
+
+        } catch (Exception e) {
+            System.err.println("Error al procesar el webhook: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
     @PostMapping("/refund")

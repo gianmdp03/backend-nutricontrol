@@ -4,6 +4,7 @@ import com.erick.nutricontrol.security.user.Enum.Role;
 import com.erick.nutricontrol.security.user.model.User;
 import com.erick.nutricontrol.security.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
@@ -12,6 +13,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 @RequiredArgsConstructor
 @Configuration
+@Slf4j
 public class DataSeeder {
     private final UserRepository userRepository;
 
@@ -63,9 +65,10 @@ public class DataSeeder {
                         existingAdmin.setUsername(username);
                         existingAdmin.setPassword(passwordEncoder.encode(password));
                         existingAdmin.setRole(Role.ROLE_ADMIN);
+                        existingAdmin.setTimezone(timezone);
 
                         userRepository.save(existingAdmin);
-                        System.out.println("DATOS DE ADMINISTRADOR ACTUALIZADOS AUTOMÁTICAMENTE");
+                        log.info("DATOS DE ADMINISTRADOR ACTUALIZADOS AUTOMÁTICAMENTE");
                     },
                     () -> {
                         User admin = new User();
@@ -75,9 +78,9 @@ public class DataSeeder {
                         admin.setUsername(username);
                         admin.setPassword(passwordEncoder.encode(password));
                         admin.setRole(Role.ROLE_ADMIN);
-
+                        admin.setTimezone(timezone);
                         userRepository.save(admin);
-                        System.out.println("ADMINISTRADOR INICIAL CREADO");
+                        log.info("ADMINISTRADOR INICIAL CREADO");
                     }
             );
 
@@ -88,9 +91,9 @@ public class DataSeeder {
                         existingUser.setUsername(userUsername);
                         existingUser.setPassword(passwordEncoder.encode(userPassword));
                         existingUser.setRole(Role.ROLE_PATIENT);
-
+                        existingUser.setTimezone(userTimezone);
                         userRepository.save(existingUser);
-                        System.out.println("DATOS DE PACIENTE ACTUALIZADOS AUTOMÁTICAMENTE");
+                        log.info("DATOS DE PACIENTE ACTUALIZADOS AUTOMÁTICAMENTE");
                     },
                     () -> {
                         User user = new User();
@@ -100,9 +103,9 @@ public class DataSeeder {
                         user.setUsername(userUsername);
                         user.setPassword(passwordEncoder.encode(userPassword));
                         user.setRole(Role.ROLE_PATIENT);
-
+                        user.setTimezone(userTimezone);
                         userRepository.save(user);
-                        System.out.println("PACIENTE INICIAL CREADO");
+                        log.info("PACIENTE INICIAL CREADO");
                     }
             );
         };

@@ -7,10 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.OffsetDateTime;
+import java.time.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,7 +15,9 @@ import java.util.List;
 @Getter
 @Setter
 @NoArgsConstructor
-@Table(name = "appointments")
+@Table(name = "appointments", uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"date", "startTime", "admin_id"})
+})
 public class Appointment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -33,20 +32,29 @@ public class Appointment {
     @Column(nullable = false)
     private LocalTime endTime;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "admin_id", nullable = false)
     private User admin;
 
-    @OneToMany(mappedBy = "appointment")
+    @OneToMany(mappedBy = "appointment", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Payment> payments = new ArrayList<>();
 
     @Column(length = 20, nullable = false)
     @Enumerated(EnumType.STRING)
     private AppointmentStatus appointmentStatus;
+
+    @Column(name = "meeting_link")
+    private String meetingLink;
+
+    @Column(name = "start_time_utc", nullable = false)
+    private OffsetDateTime startTimeUtc;
+
+    @Column(name = "end_time_utc", nullable = false)
+    private OffsetDateTime endTimeUtc;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
@@ -62,6 +70,6 @@ public class Appointment {
 
     @PrePersist
     protected void onCreate(){
-        this.createdAt = OffsetDateTime.now();
+        this.createdAt = OffsetDateTime.now(ZoneOffset.UTC);
     }
 }

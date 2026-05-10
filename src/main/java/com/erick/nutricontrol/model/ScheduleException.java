@@ -31,7 +31,7 @@ public class ScheduleException {
 
   private String reason;
 
-  @ManyToOne
+  @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "admin_id")
   private User admin;
 
