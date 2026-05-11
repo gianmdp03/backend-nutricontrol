@@ -6,6 +6,7 @@ import com.erick.nutricontrol.exception.NotFoundException;
 import com.erick.nutricontrol.security.user.Enum.Role;
 import com.erick.nutricontrol.security.user.dto.authentication.AuthenticationRequestDTO;
 import com.erick.nutricontrol.security.user.dto.authentication.AuthenticationResponseDTO;
+import com.erick.nutricontrol.security.user.dto.authentication.OAuthRequestDTO;
 import com.erick.nutricontrol.security.user.dto.user.*;
 import com.erick.nutricontrol.security.user.model.User;
 import com.erick.nutricontrol.security.user.repository.UserRepository;
@@ -95,6 +96,28 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             null);
 
     return new AuthenticationResponseDTO(jwtToken, userDetail);
+  }
+
+  @Override
+  @Transactional
+  public AuthenticationResponseDTO oauthSignIn(OAuthRequestDTO request){
+    User user = userRepository.findByEmail(request.email()).orElseGet(()->{
+      String baseUsername = request.email().split("@")[0];
+      String uniqueUsername = baseUsername + "_" + UUID.randomUUID().toString().substring(0, 8);
+      User newUser = User.builder()
+              .name(request.name())
+              .lastname(request.lastname())
+              .username(uniqueUsername)
+              .email(request.email())
+              .password(passwordEncoder.encode(UUID.randomUUID().toString()))
+              .role(Role.ROLE_PATIENT)
+              .build();
+
+      return userRepository.save(newUser);
+    });
+    String jwtToken = jwtService.generateToken(user);
+    UserDetailDTO userDetailDTO = new UserDetailDTO(user.getId(), user.getName(), user.getLastname(), user.getEmail(), user.getUsername(), user.getRole().name(), user.getTimezone(), user.isBanned(), user.isEmailConfirmed(), user.getProfilePicture());
+    return new AuthenticationResponseDTO(jwtToken, userDetailDTO);
   }
 
   @Override

@@ -3,6 +3,7 @@ package com.erick.nutricontrol.security.user.service;
 
 import com.erick.nutricontrol.security.user.dto.authentication.AuthenticationRequestDTO;
 import com.erick.nutricontrol.security.user.dto.authentication.AuthenticationResponseDTO;
+import com.erick.nutricontrol.security.user.dto.authentication.OAuthRequestDTO;
 import com.erick.nutricontrol.security.user.dto.user.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -10,6 +11,7 @@ import org.springframework.data.domain.Pageable;
 public interface AuthenticationService {
     AuthenticationResponseDTO register(UserRequestDTO request);
     AuthenticationResponseDTO authenticate(AuthenticationRequestDTO request);
+    AuthenticationResponseDTO oauthSignIn(OAuthRequestDTO request);
     void forgotPassword(String email);
     String validateCode(String email, String code);
     boolean changeForgottenPassword(String email, String token, String password);

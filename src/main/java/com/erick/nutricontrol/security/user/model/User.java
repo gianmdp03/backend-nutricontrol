@@ -2,6 +2,7 @@ package com.erick.nutricontrol.security.user.model;
 
 import com.erick.nutricontrol.security.user.Enum.Role;
 import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -86,6 +87,7 @@ public class User implements UserDetails {
         return true;
     }
 
+    @Builder
     public User(String email, String password, String name, String lastname, Role role, String username) {
         this.email = email;
         this.password = password;

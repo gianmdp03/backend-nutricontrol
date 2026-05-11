@@ -4,6 +4,7 @@ package com.erick.nutricontrol.security.user.controller;
 import com.erick.nutricontrol.security.user.dto.authentication.AuthenticationPasswordDTO;
 import com.erick.nutricontrol.security.user.dto.authentication.AuthenticationRequestDTO;
 import com.erick.nutricontrol.security.user.dto.authentication.AuthenticationResponseDTO;
+import com.erick.nutricontrol.security.user.dto.authentication.OAuthRequestDTO;
 import com.erick.nutricontrol.security.user.dto.user.*;
 import com.erick.nutricontrol.security.user.service.AuthenticationService;
 import jakarta.validation.Valid;
@@ -43,6 +44,11 @@ public class AuthenticationController {
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
                 .body(authResponse.dto());
+    }
+
+    @PostMapping("/oauth")
+    public ResponseEntity<AuthenticationResponseDTO> oauthSignIn(@RequestBody @Valid OAuthRequestDTO dto){
+        return ResponseEntity.status(HttpStatus.OK).body(authenticationService.oauthSignIn(dto));
     }
 
     @PostMapping("/forgot")
