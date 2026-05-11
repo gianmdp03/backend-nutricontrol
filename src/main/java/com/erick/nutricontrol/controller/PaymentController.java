@@ -25,7 +25,6 @@ public class PaymentController {
             PaymentOrderResponseDTO response = paymentService.createPaymentHold(requestDTO);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            // Idealmente, esto lo ataja tu GlobalExceptionHandler
             throw new BadRequestException("Error al comunicarse con PayPal: " + e.getMessage());
         }
     }
@@ -77,7 +76,7 @@ public class PaymentController {
             );
 
             if (!isValid) {
-                System.err.println("ALERTA: Firma de webhook inválida. Ignorando petición.");
+                log.warn("ALERTA: Firma de webhook inválida. Ignorando petición.");
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
             }
 
@@ -89,7 +88,7 @@ public class PaymentController {
             return ResponseEntity.ok().build();
 
         } catch (Exception e) {
-            System.err.println("Error al procesar el webhook: " + e.getMessage());
+            log.error("Error al procesar el webhook: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }

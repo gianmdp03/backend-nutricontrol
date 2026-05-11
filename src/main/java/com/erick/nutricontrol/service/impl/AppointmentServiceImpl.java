@@ -7,6 +7,7 @@ import com.erick.nutricontrol.dto.appointment.AvailableSlotDTO;
 import com.erick.nutricontrol.dto.payment.PaymentOrderResponseDTO;
 import com.erick.nutricontrol.dto.payment.PaymentRequestDTO;
 import com.erick.nutricontrol.exception.BadRequestException;
+import com.erick.nutricontrol.exception.ConflictException;
 import com.erick.nutricontrol.exception.NotFoundException;
 import com.erick.nutricontrol.mapper.AppointmentMapper;
 import com.erick.nutricontrol.model.Appointment;
@@ -73,6 +74,10 @@ public class AppointmentServiceImpl implements AppointmentService {
     LocalDate doctorDate = zdtStart.toLocalDate();
     LocalTime doctorStartTime = zdtStart.toLocalTime();
     LocalTime doctorEndTime = doctorStartTime.plusMinutes(this.durationMinutes);
+
+    if (repository.existsByUserAndAdminAndDateAndStartTime(user, admin, doctorDate, doctorStartTime)) {
+      throw new ConflictException("Ya tenés una reserva en proceso para este profesional en este exacto horario. Por favor, aguardá un momento o revisá tu historial.");
+    }
 
     LocalDate globalStart = LocalDate.now(ZoneOffset.UTC).minusDays(1);
     LocalDate globalEnd = LocalDate.now(ZoneOffset.UTC).plusDays(days + 2);
@@ -240,9 +245,12 @@ public class AppointmentServiceImpl implements AppointmentService {
 
   @Override
   @Transactional
-  public void deleteAppointment(Long id) {
+  public void deleteAppointment(Long id, String username) {
     Appointment appointment =
         repository.findById(id).orElseThrow(() -> new NotFoundException("Appointment not found"));
+    if (!appointment.getUser().getUsername().equals(username)) {
+      throw new ConflictException("Acceso denegado: No puedes modificar un turno que pertenece a otro paciente.");
+    }
     OffsetDateTime appointmentDateTime = appointment.getStartTimeUtc();
     boolean isMoreThan24HoursAhead = OffsetDateTime.now(ZoneOffset.UTC).plusHours(24).isBefore(appointmentDateTime);
     if (isMoreThan24HoursAhead) {

@@ -1,6 +1,7 @@
 package com.erick.nutricontrol.task;
 
 import com.erick.nutricontrol._enum.AppointmentStatus;
+import com.erick.nutricontrol._enum.PaymentStatus;
 import com.erick.nutricontrol.model.Appointment;
 import com.erick.nutricontrol.model.Payment;
 import com.erick.nutricontrol.repository.AppointmentRepository;
@@ -81,6 +82,7 @@ public class AppointmentTasks {
                             capturedCount++;
                         } catch (Exception e) {
                             log.error("Fallo al intentar capturar automáticamente el pago del turno ID: " + app.getId(), e);
+                            payment.setStatus(PaymentStatus.FAILED);
                         }
                     }
                 }

@@ -54,15 +54,14 @@ public class AppointmentController {
 
     @PreAuthorize("hasAuthority('ROLE_PATIENT')")
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteAppointment(@PathVariable Long id){
-        service.deleteAppointment(id);
+    public ResponseEntity<Void> deleteAppointment(@PathVariable Long id, Authentication authentication){
+        service.deleteAppointment(id, authentication.getName());
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @DeleteMapping("/admin/{id}")
-    public ResponseEntity<Void> adminDeleteAppointment(@PathVariable Long id){
-        boolean refund = true;
+    public ResponseEntity<Void> adminDeleteAppointment(@PathVariable Long id, @RequestParam(defaultValue = "true") boolean refund){
         service.adminDeleteAppointment(id, refund);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }

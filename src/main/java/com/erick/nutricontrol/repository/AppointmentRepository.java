@@ -32,4 +32,5 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
     List<Appointment> findByAdminInAndDateBetween(List<User> admins, LocalDate startDate, LocalDate endDate);
     @Query("SELECT a FROM Appointment a WHERE a.appointmentStatus = :status AND a.startTimeUtc BETWEEN :now AND :in24Hours")
     List<Appointment> findUpcomingAppointmentsToCapture(@Param("status") AppointmentStatus status, @Param("now") OffsetDateTime now, @Param("in24Hours") OffsetDateTime in24Hours);
+    boolean existsByUserAndAdminAndDateAndStartTime(User user, User admin, LocalDate date, LocalTime startTime);
 }
