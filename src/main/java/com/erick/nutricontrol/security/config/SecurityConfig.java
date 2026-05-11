@@ -50,9 +50,9 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/admin/*").hasRole("ADMIN")
                         .requestMatchers("/api/auth/*").permitAll()
                         .anyRequest().authenticated()*/
-                        .requestMatchers("/api/v1/auth/authenticate",
-                                "/api/v1/auth/register",
-                                "/api/v1/auth/oauth").permitAll()
+                        .requestMatchers("/api/auth/login",
+                                "/api/auth/register",
+                                "/api/auth/oauth").permitAll()
                         .anyRequest().permitAll()
                 )
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
