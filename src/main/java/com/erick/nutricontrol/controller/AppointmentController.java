@@ -10,6 +10,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -64,5 +66,10 @@ public class AppointmentController {
     public ResponseEntity<Void> adminDeleteAppointment(@PathVariable Long id, @RequestParam(defaultValue = "true") boolean refund){
         service.adminDeleteAppointment(id, refund);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
+
+    @GetMapping("/all")
+    public ResponseEntity<Page<AppointmentDetailDTO>> getAllAppointments(@PageableDefault(page = 0, size = 12, sort = "startTimeUtc", direction = Sort.Direction.DESC) Pageable pageable){
+        return ResponseEntity.status(HttpStatus.OK).body(service.getAllAppointments(pageable));
     }
 }

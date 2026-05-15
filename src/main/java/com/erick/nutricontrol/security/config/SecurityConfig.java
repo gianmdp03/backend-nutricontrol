@@ -19,7 +19,7 @@ import java.util.List;
 
 @Configuration
 @EnableWebSecurity
-//@EnableMethodSecurity
+@EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthFilter;
@@ -31,7 +31,7 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
-                        /*//APPOINTMENTS
+                        //APPOINTMENTS
                         .requestMatchers("/api/appointments/admin").hasRole("ADMIN")
                         .requestMatchers("/api/appointments/*").hasRole("PATIENT")
                         //MEDICALRECORD
@@ -39,9 +39,9 @@ public class SecurityConfig {
                         //PAYMENT
 
                         //SCHEDULEEXCEPTION
-                        .requestMatchers("/api/schedule_exceptions").hasRole("ADMIN")
+                        .requestMatchers("/api/schedule-exceptions").hasRole("ADMIN")
                         //SCHEDULERULE
-                        .requestMatchers("/api/schedule_rules").hasRole("ADMIN")
+                        .requestMatchers("/api/schedule-rules").hasRole("ADMIN")
                         //SERVICE
                         .requestMatchers("/api/services/public").permitAll()
                         .requestMatchers("/api/services/*").hasRole("ADMIN")
@@ -49,11 +49,10 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/logged/*").hasAnyRole("ADMIN", "PATIENT")
                         .requestMatchers("/api/auth/admin/*").hasRole("ADMIN")
                         .requestMatchers("/api/auth/*").permitAll()
-                        .anyRequest().authenticated()*/
                         .requestMatchers("/api/auth/login",
                                 "/api/auth/register",
                                 "/api/auth/oauth").permitAll()
-                        .anyRequest().permitAll()
+                        .anyRequest().authenticated()
                 )
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider)
@@ -68,8 +67,6 @@ public class SecurityConfig {
         configuration.setAllowedOrigins(List.of("http://localhost:4200", "http://localhost:50093","http://localhost:3000", "http://190.191.214.105:3000"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
-        //Cookies
-        configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);

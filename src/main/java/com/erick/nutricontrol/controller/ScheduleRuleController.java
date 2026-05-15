@@ -26,31 +26,31 @@ public class ScheduleRuleController {
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PostMapping
     public ResponseEntity<ScheduleRuleDetailDTO> addScheduleRule(Authentication authentication, @Valid @RequestBody ScheduleRuleRequestDTO dto){
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.addScheduleRule("zcepeda", dto));
+        return ResponseEntity.status(HttpStatus.CREATED).body(service.addScheduleRule(authentication.getName(), dto));
     }
 
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @GetMapping
     public ResponseEntity<Page<ScheduleRuleDetailDTO>> listScheduleRulesByAdmin(Authentication authentication, @PageableDefault(page = 0, size = 12, sort = "dayOfWeek", direction = Sort.Direction.DESC) Pageable pageable){
-        return ResponseEntity.status(HttpStatus.OK).body(service.listScheduleRulesByAdmin("zcepeda", pageable));
+        return ResponseEntity.status(HttpStatus.OK).body(service.listScheduleRulesByAdmin(authentication.getName(), pageable));
     }
 
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @GetMapping("/{id}")
     public ResponseEntity<ScheduleRuleDetailDTO> getScheduleRuleById(Authentication authentication, @PathVariable Long id){
-        return ResponseEntity.status(HttpStatus.OK).body(service.getScheduleRuleById("zcepeda", id));
+        return ResponseEntity.status(HttpStatus.OK).body(service.getScheduleRuleById(authentication.getName(), id));
     }
 
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PatchMapping("/{id}")
     public ResponseEntity<ScheduleRuleDetailDTO> updateScheduleRule(Authentication authentication, @PathVariable Long id, @Valid @RequestBody ScheduleRuleUpdateDTO dto){
-        return ResponseEntity.status(HttpStatus.OK).body(service.updateScheduleRule("zcepeda", id, dto));
+        return ResponseEntity.status(HttpStatus.OK).body(service.updateScheduleRule(authentication.getName(), id, dto));
     }
 
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteScheduleRule(Authentication authentication, @PathVariable Long id){
-        service.deleteScheduleRuleById("zcepeda", id);
+        service.deleteScheduleRuleById(authentication.getName(), id);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 }

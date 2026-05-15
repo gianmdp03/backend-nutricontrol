@@ -29,21 +29,17 @@ public class AuthenticationController {
     @PostMapping("/register")
     public ResponseEntity<UserDetailDTO> register(@Valid @RequestBody UserRequestDTO request) {
         AuthenticationResponseDTO authResponse = authenticationService.register(request);
-        ResponseCookie cookie = createAccessTokenCookie(authResponse.token());
 
         return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, cookie.toString())
                 .body(authResponse.dto());
     }
 
     @PostMapping("/login")
-    public ResponseEntity<UserDetailDTO> authenticate(@Valid @RequestBody AuthenticationRequestDTO request) {
+    public ResponseEntity<AuthenticationResponseDTO> authenticate(@Valid @RequestBody AuthenticationRequestDTO request) {
         AuthenticationResponseDTO authResponse = authenticationService.authenticate(request);
-        ResponseCookie cookie = createAccessTokenCookie(authResponse.token());
 
         return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, cookie.toString())
-                .body(authResponse.dto());
+                .body(authResponse);
     }
 
     @PostMapping("/oauth")
@@ -158,29 +154,5 @@ public class AuthenticationController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
         return ResponseEntity.ok(authenticationService.getUserByEmail(authentication.getName()));
-    }
-
-    @DeleteMapping("/logout")
-    public ResponseEntity<Void> logout() {
-        ResponseCookie cookie = ResponseCookie.from("accessToken", "")
-                .httpOnly(true)
-                .secure(false)
-                .path("/")
-                .maxAge(0)
-                .build();
-
-        return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, cookie.toString())
-                .build();
-    }
-
-    private ResponseCookie createAccessTokenCookie(String token) {
-        return ResponseCookie.from("accessToken", token)
-                .httpOnly(true)
-                .secure(false)
-                .path("/")
-                .maxAge(24 * 60 * 60)
-                .sameSite("Strict")
-                .build();
     }
 }

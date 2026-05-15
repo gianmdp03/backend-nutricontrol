@@ -276,6 +276,15 @@ public class AppointmentServiceImpl implements AppointmentService {
     repository.delete(appointment);
   }
 
+  @Override
+  public Page<AppointmentDetailDTO> getAllAppointments(Pageable pageable){
+    Page<Appointment> page = repository.findAll(pageable);
+    if(page.isEmpty()) {
+      return Page.empty();
+    }
+    return page.map(mapper::toDetailDTO);
+  }
+
   private void processRefundIfApply(Appointment appointment, boolean adminForcedRefund) {
     if (!appointment.getPayments().isEmpty()) {
       for (Payment payment : appointment.getPayments()) {
