@@ -18,8 +18,6 @@ import java.util.List;
 
 @Repository
 public interface AppointmentRepository extends JpaRepository<Appointment, Long> {
-    List<Appointment> findByDateBetween(LocalDate startDate, LocalDate endDate);
-    boolean existsByDateAndStartTimeAndAppointmentStatusNot(LocalDate startDate, LocalTime startTime, AppointmentStatus appointmentStatus);
     @EntityGraph(attributePaths = {"admin", "user"})
     Page<Appointment> findByAdminAndAppointmentStatusIn(User admin, List<AppointmentStatus> allAppointmentStatus, Pageable pageable);
     @EntityGraph(attributePaths = {"admin", "user"})
@@ -28,9 +26,12 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
     List<Appointment> findExpiredAppointments(@Param("now") OffsetDateTime now);
     List<Appointment> findByAppointmentStatusAndCreatedAtBefore(AppointmentStatus appointmentStatus, OffsetDateTime dateTime);
     @EntityGraph(attributePaths = {"admin", "user"})
-    Page<Appointment> findByAdminAndDateBetween(User admin,  LocalDate startDate, LocalDate endDate, Pageable pageable);
     List<Appointment> findByAdminInAndDateBetween(List<User> admins, LocalDate startDate, LocalDate endDate);
     @Query("SELECT a FROM Appointment a WHERE a.appointmentStatus = :status AND a.startTimeUtc BETWEEN :now AND :in24Hours")
     List<Appointment> findUpcomingAppointmentsToCapture(@Param("status") AppointmentStatus status, @Param("now") OffsetDateTime now, @Param("in24Hours") OffsetDateTime in24Hours);
     boolean existsByUserAndAdminAndDateAndStartTimeAndAppointmentStatusNot(User user, User admin, LocalDate date, LocalTime startTime, AppointmentStatus status);
+    @Query("SELECT a FROM Appointment a WHERE a.appointmentStatus = 'CONFIRMED' AND a.endTimeUtc <= :now")
+    List<Appointment> findPastConfirmedAppointments(@Param("now") OffsetDateTime now);
+    @Query("SELECT a FROM Appointment a WHERE a.appointmentStatus = 'USER_DIDNT_COME' AND a.endTimeUtc <= :thirtyDaysAgo")
+    List<Appointment> findOldUnattendedAppointments(@Param("thirtyDaysAgo") OffsetDateTime thirtyDaysAgo);
 }

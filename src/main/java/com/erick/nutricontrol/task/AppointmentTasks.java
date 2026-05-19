@@ -93,4 +93,33 @@ public class AppointmentTasks {
             log.info("Se capturaron exitosamente los fondos de {} turnos.", capturedCount);
         }
     }
+
+    @Scheduled(cron = "0 0 * * * *")
+    @Transactional
+    public void markUnattendedAppointments() {
+        log.info("Buscando turnos confirmados que ya pasaron y no fueron marcados como completados...");
+
+        OffsetDateTime nowUtc = OffsetDateTime.now(ZoneOffset.UTC);
+        List<Appointment> pastAppointments = repository.findPastConfirmedAppointments(nowUtc);
+
+        if (!pastAppointments.isEmpty()) {
+            pastAppointments.forEach(a -> a.setAppointmentStatus(AppointmentStatus.USER_DIDNT_COME));
+            repository.saveAll(pastAppointments);
+            log.info("Se marcaron {} turnos como USER_DIDNT_COME.", pastAppointments.size());
+        }
+    }
+
+    @Scheduled(cron = "0 0 3 * * *")
+    @Transactional
+    public void deleteOldUnattendedAppointments() {
+        log.info("Buscando turnos USER_DIDNT_COME de más de 30 días para eliminar...");
+
+        OffsetDateTime thirtyDaysAgoUtc = OffsetDateTime.now(ZoneOffset.UTC).minusDays(30);
+        List<Appointment> garbageToDestroy = repository.findOldUnattendedAppointments(thirtyDaysAgoUtc);
+
+        if (!garbageToDestroy.isEmpty()) {
+            repository.deleteAll(garbageToDestroy);
+            log.info("Se eliminó físicamente la basura: {} turnos USER_DIDNT_COME con más de 30 días.", garbageToDestroy.size());
+        }
+    }
 }
