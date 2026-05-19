@@ -15,9 +15,7 @@ import java.util.List;
 @Getter
 @Setter
 @NoArgsConstructor
-@Table(name = "appointments", uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"date", "startTime", "admin_id"})
-})
+@Table(name = "appointments")
 public class Appointment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

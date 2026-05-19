@@ -21,7 +21,7 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
     List<Appointment> findByDateBetween(LocalDate startDate, LocalDate endDate);
     boolean existsByDateAndStartTimeAndAppointmentStatusNot(LocalDate startDate, LocalTime startTime, AppointmentStatus appointmentStatus);
     @EntityGraph(attributePaths = {"admin", "user"})
-    Page<Appointment> findByAdmin(User admin, Pageable pageable);
+    Page<Appointment> findByAdminAndAppointmentStatusIn(User admin, List<AppointmentStatus> allAppointmentStatus, Pageable pageable);
     @EntityGraph(attributePaths = {"admin", "user"})
     Page<Appointment> findByUser(User user, Pageable pageable);
     @Query("SELECT a FROM Appointment a WHERE a.appointmentStatus = 'PENDING' AND a.endTimeUtc <= :now")
@@ -32,5 +32,5 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
     List<Appointment> findByAdminInAndDateBetween(List<User> admins, LocalDate startDate, LocalDate endDate);
     @Query("SELECT a FROM Appointment a WHERE a.appointmentStatus = :status AND a.startTimeUtc BETWEEN :now AND :in24Hours")
     List<Appointment> findUpcomingAppointmentsToCapture(@Param("status") AppointmentStatus status, @Param("now") OffsetDateTime now, @Param("in24Hours") OffsetDateTime in24Hours);
-    boolean existsByUserAndAdminAndDateAndStartTime(User user, User admin, LocalDate date, LocalTime startTime);
+    boolean existsByUserAndAdminAndDateAndStartTimeAndAppointmentStatusNot(User user, User admin, LocalDate date, LocalTime startTime, AppointmentStatus status);
 }

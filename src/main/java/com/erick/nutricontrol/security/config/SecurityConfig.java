@@ -36,7 +36,9 @@ public class SecurityConfig {
                         .requestMatchers("/api/appointments/*").hasRole("PATIENT")
                         //MEDICALRECORD
 
-                        //PAYMENT
+                        //PAYMENT (¡NUEVO!)
+                        .requestMatchers("/api/payments/webhook").permitAll() // PayPal no tiene token, debe entrar libre
+                        .requestMatchers("/api/payments/**").hasAnyRole("PATIENT", "ADMIN") // Tu frontend sí tiene token
 
                         //SCHEDULEEXCEPTION
                         .requestMatchers("/api/schedule-exceptions").hasRole("ADMIN")

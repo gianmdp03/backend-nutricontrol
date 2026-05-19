@@ -44,13 +44,13 @@ public class AppointmentController {
 
     @PreAuthorize("hasAuthority('ROLE_PATIENT')")
     @GetMapping("/user")
-    public ResponseEntity<Page<AppointmentDetailDTO>> listUserAppointments(Authentication authentication, Pageable pageable){
+    public ResponseEntity<Page<AppointmentDetailDTO>> listUserAppointments(Authentication authentication, @PageableDefault(page = 0, size = 24, sort = "startTimeUtc", direction = Sort.Direction.DESC) Pageable pageable){
         return ResponseEntity.status(HttpStatus.OK).body(service.listUserAppointments(authentication.getName(), pageable));
     }
 
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @GetMapping("/admin")
-    public ResponseEntity<Page<AppointmentDetailDTO>> listAdminAppointments(Authentication authentication, Pageable pageable){
+    public ResponseEntity<Page<AppointmentDetailDTO>> listAdminAppointments(Authentication authentication, @PageableDefault(page = 0, size = 24, sort = "startTimeUtc", direction = Sort.Direction.DESC) Pageable pageable){
         return ResponseEntity.status(HttpStatus.OK).body(service.listAdminAppointments(authentication.getName(), pageable));
     }
 

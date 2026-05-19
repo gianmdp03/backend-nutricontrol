@@ -75,7 +75,7 @@ public class AppointmentServiceImpl implements AppointmentService {
     LocalTime doctorStartTime = zdtStart.toLocalTime();
     LocalTime doctorEndTime = doctorStartTime.plusMinutes(this.durationMinutes);
 
-    if (repository.existsByUserAndAdminAndDateAndStartTime(user, admin, doctorDate, doctorStartTime)) {
+    if (repository.existsByUserAndAdminAndDateAndStartTimeAndAppointmentStatusNot(user, admin, doctorDate, doctorStartTime, AppointmentStatus.CANCELLED)) {
       throw new ConflictException("Ya tenés una reserva en proceso para este profesional en este exacto horario. Por favor, aguardá un momento o revisá tu historial.");
     }
 
@@ -160,10 +160,14 @@ public class AppointmentServiceImpl implements AppointmentService {
 
     Map<LocalDate, Set<LocalTime>> occupiedSlotsPerDay = new HashMap<>();
     for (Appointment app : booked) {
+      if (app.getAppointmentStatus() == AppointmentStatus.CANCELLED) {
+        continue;
+      }
+
       LocalDate d = app.getDate();
       occupiedSlotsPerDay.putIfAbsent(d, new HashSet<>());
-      List<LocalTime> appSlots = calculateMinutes(app.getStartTime(), app.getEndTime(), minutesGap);
-      occupiedSlotsPerDay.get(d).addAll(appSlots);
+
+      occupiedSlotsPerDay.get(d).add(app.getStartTime());
     }
 
     Map<LocalDate, List<LocalTime>> availability = new TreeMap<>();
@@ -236,7 +240,11 @@ public class AppointmentServiceImpl implements AppointmentService {
         userRepository
             .findByUsername(username)
             .orElseThrow(() -> new NotFoundException("User not found"));
-    Page<Appointment> page = repository.findByAdmin(admin, pageable);
+    List<AppointmentStatus> statuses = new ArrayList<>();
+    statuses.add(AppointmentStatus.CONFIRMED);
+    statuses.add(AppointmentStatus.CANCELLED_REFUND);
+    statuses.add(AppointmentStatus.CANCELLED_WITHOUT_REFUND);
+    Page<Appointment> page = repository.findByAdminAndAppointmentStatusIn(admin, statuses, pageable);
     if (page.isEmpty()) {
       return Page.empty();
     }
