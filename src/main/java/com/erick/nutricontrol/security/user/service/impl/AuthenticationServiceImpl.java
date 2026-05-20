@@ -56,7 +56,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             request.name(),
             request.lastname(),
             Role.ROLE_PATIENT,
-            request.username());
+            request.username(),
+        request.timezone());
     userRepository.save(user);
     String jwtToken = jwtService.generateToken(user);
     UserDetailDTO userDetail =

@@ -109,7 +109,7 @@ public class AppointmentTasks {
         }
     }
 
-    @Scheduled(cron = "0 0 3 * * *")
+    @Scheduled(cron = "0 0 3 * * *", zone = "America/Santo_Domingo")
     @Transactional
     public void deleteOldUnattendedAppointments() {
         log.info("Buscando turnos USER_DIDNT_COME de más de 30 días para eliminar...");

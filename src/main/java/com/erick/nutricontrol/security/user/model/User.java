@@ -88,12 +88,13 @@ public class User implements UserDetails {
     }
 
     @Builder
-    public User(String email, String password, String name, String lastname, Role role, String username) {
+    public User(String email, String password, String name, String lastname, Role role, String username, String timezone) {
         this.email = email;
         this.password = password;
         this.name = name;
         this.lastname = lastname;
         this.role = role;
         this.username = username;
+        this.timezone = timezone;
     }
 }

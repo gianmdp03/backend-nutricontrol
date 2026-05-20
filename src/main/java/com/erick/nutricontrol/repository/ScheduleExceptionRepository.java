@@ -15,4 +15,5 @@ public interface ScheduleExceptionRepository extends JpaRepository<ScheduleExcep
     @EntityGraph(attributePaths = {"admin"})
     Page<ScheduleException> findByAdmin(User admin, Pageable pageable);
     List<ScheduleException> findByAdminIn(List<User> admins);
+    List<ScheduleException> findByDateBefore(LocalDate date);
 }
