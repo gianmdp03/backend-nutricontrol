@@ -12,4 +12,5 @@ public record AppointmentDetailDTO(
     LocalTime startTime,
     LocalTime endTime,
     AdminDetailDTO admin,
-    AppointmentStatus appointmentStatus) {}
+    AppointmentStatus appointmentStatus,
+    String meetingLink) {}

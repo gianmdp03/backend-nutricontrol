@@ -10,6 +10,7 @@ import com.erick.nutricontrol.model.Payment;
 import com.erick.nutricontrol.repository.AppointmentRepository;
 import com.erick.nutricontrol.repository.PaymentRepository;
 import com.erick.nutricontrol.service.EmailService;
+import com.erick.nutricontrol.service.GoogleMeetService;
 import com.erick.nutricontrol.service.PDFGeneratorService;
 import com.erick.nutricontrol.service.PaymentService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -46,6 +47,7 @@ public class PaymentServiceImpl implements PaymentService {
   private final AppointmentRepository appointmentRepository;
   private final PDFGeneratorService pdfGeneratorService;
   private final EmailService emailService;
+  private final GoogleMeetService googleMeetService;
 
   @Value("${paypal.return-url}")
   private String returnUrl;
@@ -154,6 +156,10 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     appointment.setAppointmentStatus(AppointmentStatus.CONFIRMED);
+    String meetLink = googleMeetService.createMeetLink(appointment);
+    if (meetLink != null) {
+      appointment.setMeetingLink(meetLink);
+    }
     appointmentRepository.save(appointment);
 
     String patientName = appointment.getUser().getName();
@@ -170,6 +176,12 @@ public class PaymentServiceImpl implements PaymentService {
           "Hola "
               + patientName
               + ",\n\nAdjuntamos el comprobante de tu turno confirmado.\n¡Te esperamos!";
+
+      if (meetLink != null) {
+        body += "\nPara ingresar a la videollamada el día del turno, utiliza el siguiente enlace: " + meetLink + "\n";
+      }
+
+      body += "\n¡Te esperamos!";
 
       emailService.sendEmailWithReceipt(patientEmail, subject, body, pdfBytes);
     } catch (Exception e) {
