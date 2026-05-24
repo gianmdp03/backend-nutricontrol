@@ -8,8 +8,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Getter
@@ -39,7 +39,7 @@ public class Appointment {
     private User admin;
 
     @OneToMany(mappedBy = "appointment", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Payment> payments = new ArrayList<>();
+    private Set<Payment> payments = new HashSet<>();
 
     @Column(length = 20, nullable = false)
     @Enumerated(EnumType.STRING)

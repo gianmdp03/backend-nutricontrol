@@ -2,9 +2,12 @@ package com.erick.nutricontrol.model;
 
 import com.erick.nutricontrol._enum.PaymentStatus;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 
@@ -61,6 +64,18 @@ public class Payment {
         this.paypalCaptureId = paypalCaptureId;
         this.paypalRefundId = paypalRefundId;
         this.status = status;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Payment payment)) return false;
+        return id != null && id.equals(payment.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
     }
 
     @PrePersist
