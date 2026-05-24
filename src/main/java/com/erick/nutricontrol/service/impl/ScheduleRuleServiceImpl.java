@@ -31,14 +31,11 @@ public class ScheduleRuleServiceImpl implements ScheduleRuleService {
 
   @Override
   @Transactional
-  public ScheduleRuleDetailDTO addScheduleRule(String username, ScheduleRuleRequestDTO dto) {
+  public ScheduleRuleDetailDTO addScheduleRule(User user, ScheduleRuleRequestDTO dto) {
 
     if (!dto.endTime().isAfter(dto.startTime())) {
       throw new BadRequestException("El horario de fin debe ser posterior al horario de inicio. Si trabaja cruzando la medianoche, cree dos reglas (Ej: 22:00 a 23:59 y 00:00 a 02:00).");
     }
-
-    User user = userRepository.findByUsername(username)
-            .orElseThrow(() -> new NotFoundException("User not found"));
 
     List<ScheduleRule> list = repository.findByAdminAndDayOfWeek(user, dto.dayOfWeek());
 
@@ -62,8 +59,7 @@ public class ScheduleRuleServiceImpl implements ScheduleRuleService {
   }
 
   @Override
-  public Page<ScheduleRuleDetailDTO> listScheduleRulesByAdmin(String username, Pageable pageable) {
-    User user = userRepository.findByUsername(username).orElseThrow(()-> new NotFoundException("User not found"));
+  public Page<ScheduleRuleDetailDTO> listScheduleRulesByAdmin(User user, Pageable pageable) {
     Page<ScheduleRule> page = repository.findByAdmin(user, pageable);
     if(page.isEmpty()){
       return Page.empty();
@@ -72,8 +68,7 @@ public class ScheduleRuleServiceImpl implements ScheduleRuleService {
   }
 
   @Override
-  public ScheduleRuleDetailDTO getScheduleRuleById(String username, Long id) {
-    User user = userRepository.findByUsername(username).orElseThrow(()-> new NotFoundException("User not found"));
+  public ScheduleRuleDetailDTO getScheduleRuleById(User user, Long id) {
     ScheduleRule scheduleRule = repository.findById(id).orElseThrow(() -> new NotFoundException("Schedule Rule Not Found"));
     if(!user.equals(scheduleRule.getAdmin())) throw new BadRequestException("Invalid user");
     return mapper.toDetailDTO(scheduleRule);
@@ -81,11 +76,10 @@ public class ScheduleRuleServiceImpl implements ScheduleRuleService {
 
   @Override
   @Transactional
-  public ScheduleRuleDetailDTO updateScheduleRule(String username, Long id, ScheduleRuleUpdateDTO dto){
+  public ScheduleRuleDetailDTO updateScheduleRule(User user, Long id, ScheduleRuleUpdateDTO dto){
     if(dto.startTime().isAfter(dto.endTime()) || dto.startTime().equals(dto.endTime())) {
       throw new BadRequestException("Invalid start and end time");
     }
-    User user = userRepository.findByUsername(username).orElseThrow(()-> new NotFoundException("User not found"));
     ScheduleRule scheduleRule = repository.findById(id).orElseThrow(() -> new NotFoundException("Schedule Rule Not Found"));
     if(!user.equals(scheduleRule.getAdmin())) {
       throw new BadRequestException("Invalid user");
@@ -97,8 +91,7 @@ public class ScheduleRuleServiceImpl implements ScheduleRuleService {
 
   @Override
   @Transactional
-  public void deleteScheduleRuleById(String username, Long id) {
-    User user = userRepository.findByUsername(username).orElseThrow(()-> new NotFoundException("User not found"));
+  public void deleteScheduleRuleById(User user, Long id) {
     ScheduleRule scheduleRule = repository.findById(id).orElseThrow(() -> new NotFoundException("Schedule Rule Not Found"));
     if(!user.equals(scheduleRule.getAdmin())) {
       throw new BadRequestException("Invalid user");

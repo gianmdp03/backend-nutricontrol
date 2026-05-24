@@ -61,10 +61,8 @@ public class AppointmentServiceImpl implements AppointmentService {
 
   @Override
   @Transactional
-  public PaymentOrderResponseDTO addAppointment(String username, AppointmentRequestDTO dto)
+  public PaymentOrderResponseDTO addAppointment(User user, AppointmentRequestDTO dto)
           throws IOException, ApiException {
-    User user = userRepository.findByUsername(username)
-            .orElseThrow(() -> new NotFoundException("User not found"));
     User admin = userRepository.findById(dto.adminId())
             .orElseThrow(() -> new NotFoundException("Admin not found"));
 
@@ -222,11 +220,7 @@ public class AppointmentServiceImpl implements AppointmentService {
   }
 
   @Override
-  public Page<AppointmentDetailDTO> listUserAppointments(String username, Pageable pageable) {
-    User user =
-        userRepository
-            .findByUsername(username)
-            .orElseThrow(() -> new NotFoundException("User not found"));
+  public Page<AppointmentDetailDTO> listUserAppointments(User user, Pageable pageable) {
     Page<Appointment> page = repository.findByUser(user, pageable);
     if (page.isEmpty()) {
       return Page.empty();
@@ -235,11 +229,7 @@ public class AppointmentServiceImpl implements AppointmentService {
   }
 
   @Override
-  public Page<AppointmentDetailDTO> listAdminAppointments(String username, Pageable pageable) {
-    User admin =
-        userRepository
-            .findByUsername(username)
-            .orElseThrow(() -> new NotFoundException("User not found"));
+  public Page<AppointmentDetailDTO> listAdminAppointments(User admin, Pageable pageable) {
     List<AppointmentStatus> statuses = new ArrayList<>();
     statuses.add(AppointmentStatus.CONFIRMED);
     statuses.add(AppointmentStatus.CANCELLED_REFUND);
@@ -253,10 +243,10 @@ public class AppointmentServiceImpl implements AppointmentService {
 
   @Override
   @Transactional
-  public void deleteAppointment(Long id, String username) {
+  public void deleteAppointment(Long id, User user) {
     Appointment appointment =
         repository.findById(id).orElseThrow(() -> new NotFoundException("Appointment not found"));
-    if (!appointment.getUser().getUsername().equals(username)) {
+    if (!appointment.getUser().equals(user)) {
       throw new ConflictException("Acceso denegado: No puedes modificar un turno que pertenece a otro paciente.");
     }
     OffsetDateTime appointmentDateTime = appointment.getStartTimeUtc();

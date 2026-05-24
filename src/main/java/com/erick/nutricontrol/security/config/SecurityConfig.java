@@ -33,10 +33,10 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         //APPOINTMENTS
                         .requestMatchers("/api/appointments/admin").hasRole("ADMIN")
-                        .requestMatchers("/api/appointments/*").hasRole("PATIENT")
+                        .requestMatchers("/api/appointments/**").hasRole("PATIENT")
                         //MEDICALRECORD
 
-                        //PAYMENT (¡NUEVO!)
+                        //PAYMENT
                         .requestMatchers("/api/payments/webhook").permitAll() // PayPal no tiene token, debe entrar libre
                         .requestMatchers("/api/payments/**").hasAnyRole("PATIENT", "ADMIN") // Tu frontend sí tiene token
 
@@ -46,11 +46,11 @@ public class SecurityConfig {
                         .requestMatchers("/api/schedule-rules").hasRole("ADMIN")
                         //SERVICE
                         .requestMatchers("/api/services/public").permitAll()
-                        .requestMatchers("/api/services/*").hasRole("ADMIN")
+                        .requestMatchers("/api/services/**").hasRole("ADMIN")
                         //AUTHENTICATION
-                        .requestMatchers("/api/auth/logged/*").hasAnyRole("ADMIN", "PATIENT")
-                        .requestMatchers("/api/auth/admin/*").hasRole("ADMIN")
-                        .requestMatchers("/api/auth/*").permitAll()
+                        .requestMatchers("/api/auth/logged/**").hasAnyRole("ADMIN", "PATIENT")
+                        .requestMatchers("/api/auth/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/auth/**", "/ws/**").permitAll()
                         .requestMatchers("/api/auth/login",
                                 "/api/auth/register",
                                 "/api/auth/oauth").permitAll()

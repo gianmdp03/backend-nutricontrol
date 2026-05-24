@@ -27,11 +27,10 @@ public class ScheduleExceptionServiceImpl implements ScheduleExceptionService {
 
   @Override
   @Transactional
-  public ScheduleExceptionDetailDTO addScheduleException(String username, ScheduleExceptionRequestDTO dto) {
+  public ScheduleExceptionDetailDTO addScheduleException(User user, ScheduleExceptionRequestDTO dto) {
     if(dto.startTime().isAfter(dto.endTime()) || dto.startTime().equals(dto.endTime())) {
       throw new BadRequestException("Invalid start and end time");
     }
-    User user = userRepository.findByUsername(username).orElseThrow(()->new NotFoundException("User not found"));
     ScheduleException scheduleException = mapper.toEntity(dto);
     scheduleException.setAdmin(user);
     scheduleException = repository.save(scheduleException);
@@ -39,8 +38,7 @@ public class ScheduleExceptionServiceImpl implements ScheduleExceptionService {
   }
 
   @Override
-  public Page<ScheduleExceptionDetailDTO> listScheduleExceptionsByAdmin(String username, Pageable pageable) {
-    User user = userRepository.findByUsername(username).orElseThrow(()->new NotFoundException("User not found"));
+  public Page<ScheduleExceptionDetailDTO> listScheduleExceptionsByAdmin(User user, Pageable pageable) {
     Page<ScheduleException> page = repository.findByAdmin(user, pageable);
     if(page.isEmpty()){
       return Page.empty();
@@ -49,8 +47,7 @@ public class ScheduleExceptionServiceImpl implements ScheduleExceptionService {
   }
 
   @Override
-  public ScheduleExceptionDetailDTO getScheduleExceptionById(String username, Long id) {
-    User user = userRepository.findByUsername(username).orElseThrow(()->new NotFoundException("User not found"));
+  public ScheduleExceptionDetailDTO getScheduleExceptionById(User user, Long id) {
     ScheduleException scheduleException =
         repository
             .findById(id)
@@ -62,11 +59,10 @@ public class ScheduleExceptionServiceImpl implements ScheduleExceptionService {
   @Override
   @Transactional
   public ScheduleExceptionDetailDTO updateScheduleException(
-      String username, Long id, ScheduleExceptionUpdateDTO dto) {
+          User user, Long id, ScheduleExceptionUpdateDTO dto) {
     if(dto.startTime().isAfter(dto.endTime()) || dto.startTime().equals(dto.endTime())) {
       throw new BadRequestException("Invalid start and end time");
     }
-    User user = userRepository.findByUsername(username).orElseThrow(()->new NotFoundException("User not found"));
     ScheduleException scheduleException =
         repository
             .findById(id)
@@ -79,8 +75,7 @@ public class ScheduleExceptionServiceImpl implements ScheduleExceptionService {
 
   @Override
   @Transactional
-  public void deleteScheduleException(String username, Long id) {
-    User user = userRepository.findByUsername(username).orElseThrow(()->new NotFoundException("User not found"));
+  public void deleteScheduleException(User user, Long id) {
     ScheduleException scheduleException =
         repository
             .findById(id)
