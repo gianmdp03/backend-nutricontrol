@@ -8,6 +8,8 @@ import com.erick.nutricontrol.security.user.model.User;
 import com.erick.nutricontrol.service.AppointmentService;
 import com.paypal.sdk.exceptions.ApiException;
 import jakarta.validation.Valid;
+import java.io.IOException;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -18,9 +20,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
-import java.io.IOException;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/appointments")
@@ -64,10 +63,5 @@ public class AppointmentController {
     public ResponseEntity<Void> adminDeleteAppointment(@PathVariable Long id, @RequestParam(defaultValue = "true") boolean refund){
         service.adminDeleteAppointment(id, refund);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
-    }
-
-    @GetMapping("/all")
-    public ResponseEntity<Page<AppointmentDetailDTO>> getAllAppointments(@PageableDefault(page = 0, size = 12, sort = "startTimeUtc", direction = Sort.Direction.DESC) Pageable pageable){
-        return ResponseEntity.status(HttpStatus.OK).body(service.getAllAppointments(pageable));
     }
 }

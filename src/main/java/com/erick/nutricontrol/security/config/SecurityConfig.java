@@ -1,5 +1,6 @@
 package com.erick.nutricontrol.security.config;
 
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,8 +15,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
-import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -47,6 +46,11 @@ public class SecurityConfig {
                         //SERVICE
                         .requestMatchers("/api/services/public").permitAll()
                         .requestMatchers("/api/services/**").hasRole("ADMIN")
+                        //NOTIFICATION
+                        .requestMatchers("/api/notifications/**").hasAnyRole("PATIENT", "ADMIN")
+                        //REVIEW
+                        .requestMatchers("/api/reviews").hasRole("PATIENT")
+                        .requestMatchers("/api/reviews/admin").hasRole("ADMIN")
                         //AUTHENTICATION
                         .requestMatchers("/api/auth/logged/**").hasAnyRole("ADMIN", "PATIENT")
                         .requestMatchers("/api/auth/admin/**").hasRole("ADMIN")

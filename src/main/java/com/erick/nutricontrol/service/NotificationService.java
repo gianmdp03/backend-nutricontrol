@@ -9,6 +9,8 @@ import org.springframework.data.domain.Pageable;
 public interface NotificationService {
     NotificationDetailDTO createNotification(User user, Notification notification);
     Page<NotificationDetailDTO> listUserNotifications(User user, Pageable pageable);
+    void markAsRead(User user, Long id);
+    void markAllAsRead(User user);
     void deleteNotification(User user, Long id);
     void deleteAllNotifications(User user);
 

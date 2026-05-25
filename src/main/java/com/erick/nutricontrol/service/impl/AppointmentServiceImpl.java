@@ -15,7 +15,6 @@ import com.erick.nutricontrol.model.Payment;
 import com.erick.nutricontrol.model.ScheduleException;
 import com.erick.nutricontrol.model.ScheduleRule;
 import com.erick.nutricontrol.repository.AppointmentRepository;
-import com.erick.nutricontrol.repository.PaymentRepository;
 import com.erick.nutricontrol.repository.ScheduleExceptionRepository;
 import com.erick.nutricontrol.repository.ScheduleRuleRepository;
 import com.erick.nutricontrol.security.user.Enum.Role;
@@ -25,18 +24,16 @@ import com.erick.nutricontrol.service.AppointmentService;
 import com.erick.nutricontrol.service.EmailService;
 import com.erick.nutricontrol.service.PaymentService;
 import com.paypal.sdk.exceptions.ApiException;
-import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.io.IOException;
 import java.time.*;
 import java.util.*;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
