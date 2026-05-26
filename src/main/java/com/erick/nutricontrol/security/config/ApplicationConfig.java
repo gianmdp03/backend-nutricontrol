@@ -10,42 +10,51 @@ import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.argon2.Argon2PasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Configuration
 @RequiredArgsConstructor
 public class ApplicationConfig {
 
-    private final UserRepository userRepository;
+  private final UserRepository userRepository;
 
-    @Bean
-    public UserDetailsService userDetailsService() {
-        return loginInput -> {
-            if (loginInput.contains("@")) {
-                return userRepository.findByEmail(loginInput)
-                        .orElseThrow(() -> new UsernameNotFoundException("User not found"));
-            } else {
-                return userRepository.findByUsername(loginInput)
-                        .orElseThrow(() -> new UsernameNotFoundException("User not found"));
-            }
-        };
-    }
+  @Bean
+  public UserDetailsService userDetailsService() {
+    return loginInput -> {
+      if (loginInput.contains("@")) {
+        return userRepository
+            .findByEmail(loginInput)
+            .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+      } else {
+        return userRepository
+            .findByUsername(loginInput)
+            .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+      }
+    };
+  }
 
-    @Bean
-    public AuthenticationProvider authenticationProvider() {
-        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider(userDetailsService());
-        authProvider.setPasswordEncoder(passwordEncoder());
-        return authProvider;
-    }
+  @Bean
+  public AuthenticationProvider authenticationProvider() {
+    DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider(userDetailsService());
+    authProvider.setPasswordEncoder(passwordEncoder());
+    return authProvider;
+  }
 
-    @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
-        return config.getAuthenticationManager();
-    }
+  @Bean
+  public AuthenticationManager authenticationManager(AuthenticationConfiguration config)
+      throws Exception {
+    return config.getAuthenticationManager();
+  }
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+  @Bean
+  public PasswordEncoder passwordEncoder() {
+    int saltLength = 16;
+    int hashLength = 32;
+    int parallelism = 1;
+    int memory = 65536;
+    int iterations = 3;
+
+    return new Argon2PasswordEncoder(saltLength, hashLength, parallelism, memory, iterations);
+  }
 }

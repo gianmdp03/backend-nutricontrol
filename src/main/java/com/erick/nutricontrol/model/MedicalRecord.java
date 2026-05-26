@@ -1,13 +1,12 @@
 package com.erick.nutricontrol.model;
 
+import com.erick.nutricontrol.security.user.model.User;
 import jakarta.persistence.*;
+import java.time.OffsetDateTime;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
-
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
 
 @Entity
 @Getter
@@ -31,14 +30,19 @@ public class MedicalRecord {
     @Column(columnDefinition = "TEXT", nullable = false)
     private String medication;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private OffsetDateTime creationDate;
 
-    public MedicalRecord(Double weight, Double height, String medicalHistory, String medication) {
+    public MedicalRecord(Double weight, Double height, String medicalHistory, String medication, User user) {
         this.weight = weight;
         this.height = height;
         this.medicalHistory = medicalHistory;
         this.medication = medication;
+        this.user = user;
     }
 }

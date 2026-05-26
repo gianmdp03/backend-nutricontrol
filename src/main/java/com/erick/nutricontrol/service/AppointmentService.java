@@ -6,14 +6,10 @@ import com.erick.nutricontrol.dto.appointment.AvailableSlotDTO;
 import com.erick.nutricontrol.dto.payment.PaymentOrderResponseDTO;
 import com.erick.nutricontrol.security.user.model.User;
 import com.paypal.sdk.exceptions.ApiException;
+import java.io.IOException;
+import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-
-import java.io.IOException;
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.util.List;
-import java.util.Map;
 
 public interface AppointmentService {
     PaymentOrderResponseDTO addAppointment(User user, AppointmentRequestDTO dto) throws IOException, ApiException;
@@ -22,5 +18,4 @@ public interface AppointmentService {
     Page<AppointmentDetailDTO> listAdminAppointments(User user, Pageable pageable);
     void deleteAppointment(Long id, User user);
     void adminDeleteAppointment(Long id, boolean refund);
-    Page<AppointmentDetailDTO> getAllAppointments(Pageable pageable);
 }

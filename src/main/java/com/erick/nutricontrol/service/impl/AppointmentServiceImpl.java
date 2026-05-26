@@ -59,31 +59,40 @@ public class AppointmentServiceImpl implements AppointmentService {
   @Override
   @Transactional
   public PaymentOrderResponseDTO addAppointment(User user, AppointmentRequestDTO dto)
-          throws IOException, ApiException {
-    User admin = userRepository.findById(dto.adminId())
+      throws IOException, ApiException {
+    User admin =
+        userRepository
+            .findById(dto.adminId())
             .orElseThrow(() -> new NotFoundException("Admin not found"));
 
-    ZoneId doctorZone = ZoneId.of(admin.getTimezone() != null ? admin.getTimezone() : "America/Santo_Domingo");
+    ZoneId doctorZone =
+        ZoneId.of(admin.getTimezone() != null ? admin.getTimezone() : "America/Santo_Domingo");
     ZonedDateTime zdtStart = dto.startTime().atZoneSameInstant(doctorZone);
 
     LocalDate doctorDate = zdtStart.toLocalDate();
     LocalTime doctorStartTime = zdtStart.toLocalTime();
     LocalTime doctorEndTime = doctorStartTime.plusMinutes(this.durationMinutes);
 
-    if (repository.existsByUserAndAdminAndDateAndStartTimeAndAppointmentStatusNot(user, admin, doctorDate, doctorStartTime, AppointmentStatus.CANCELLED)) {
-      throw new ConflictException("Ya tenés una reserva en proceso para este profesional en este exacto horario. Por favor, aguardá un momento o revisá tu historial.");
+    if (repository.existsByUserAndAdminAndDateAndStartTimeAndAppointmentStatusNot(
+        user, admin, doctorDate, doctorStartTime, AppointmentStatus.CANCELLED)) {
+      throw new ConflictException(
+          "Ya tenés una reserva en proceso para este profesional en este exacto horario. Por favor, aguardá un momento o revisá tu historial.");
     }
 
     LocalDate globalStart = LocalDate.now(ZoneOffset.UTC).minusDays(1);
     LocalDate globalEnd = LocalDate.now(ZoneOffset.UTC).plusDays(days + 2);
 
     List<ScheduleRule> adminRules = scheduleRuleRepository.findByAdminIn(List.of(admin));
-    List<ScheduleException> adminExceptions = scheduleExceptionRepository.findByAdminIn(List.of(admin));
-    List<Appointment> adminBooked = repository.findByAdminInAndDateBetween(List.of(admin), globalStart, globalEnd);
+    List<ScheduleException> adminExceptions =
+        scheduleExceptionRepository.findByAdminIn(List.of(admin));
+    List<Appointment> adminBooked =
+        repository.findByAdminInAndDateBetween(List.of(admin), globalStart, globalEnd);
 
-    Map<LocalDate, List<LocalTime>> availableSlots = calculateInMemoryAvailability(admin, adminRules, adminExceptions, adminBooked);
+    Map<LocalDate, List<LocalTime>> availableSlots =
+        calculateInMemoryAvailability(admin, adminRules, adminExceptions, adminBooked);
 
-    List<LocalTime> slotsForRequestedDate = availableSlots.getOrDefault(doctorDate, Collections.emptyList());
+    List<LocalTime> slotsForRequestedDate =
+        availableSlots.getOrDefault(doctorDate, Collections.emptyList());
 
     if (!slotsForRequestedDate.contains(doctorStartTime)) {
       throw new BadRequestException("El turno seleccionado ya no está disponible.");
@@ -113,33 +122,38 @@ public class AppointmentServiceImpl implements AppointmentService {
 
     List<ScheduleRule> allRules = scheduleRuleRepository.findByAdminIn(admins);
     List<ScheduleException> allExceptions = scheduleExceptionRepository.findByAdminIn(admins);
-    List<Appointment> allBooked = repository.findByAdminInAndDateBetween(admins, globalStart, globalEnd);
+    List<Appointment> allBooked =
+        repository.findByAdminInAndDateBetween(admins, globalStart, globalEnd);
 
-    Map<Long, List<ScheduleRule>> rulesByAdmin = allRules.stream().collect(Collectors.groupingBy(r -> r.getAdmin().getId()));
-    Map<Long, List<ScheduleException>> exceptionsByAdmin = allExceptions.stream().collect(Collectors.groupingBy(e -> e.getAdmin().getId()));
-    Map<Long, List<Appointment>> bookedByAdmin = allBooked.stream().collect(Collectors.groupingBy(a -> a.getAdmin().getId()));
+    Map<Long, List<ScheduleRule>> rulesByAdmin =
+        allRules.stream().collect(Collectors.groupingBy(r -> r.getAdmin().getId()));
+    Map<Long, List<ScheduleException>> exceptionsByAdmin =
+        allExceptions.stream().collect(Collectors.groupingBy(e -> e.getAdmin().getId()));
+    Map<Long, List<Appointment>> bookedByAdmin =
+        allBooked.stream().collect(Collectors.groupingBy(a -> a.getAdmin().getId()));
 
     List<AvailableSlotDTO> globalAvailableSlots = new ArrayList<>();
 
     for (User admin : admins) {
       Long adminId = admin.getId();
       List<ScheduleRule> adminRules = rulesByAdmin.getOrDefault(adminId, Collections.emptyList());
-      List<ScheduleException> adminExceptions = exceptionsByAdmin.getOrDefault(adminId, Collections.emptyList());
+      List<ScheduleException> adminExceptions =
+          exceptionsByAdmin.getOrDefault(adminId, Collections.emptyList());
       List<Appointment> adminBooked = bookedByAdmin.getOrDefault(adminId, Collections.emptyList());
 
-      Map<LocalDate, List<LocalTime>> availability = calculateInMemoryAvailability(admin, adminRules, adminExceptions, adminBooked);
-      ZoneId doctorZone = ZoneId.of(admin.getTimezone() != null ? admin.getTimezone() : "America/Santo_Domingo");
+      Map<LocalDate, List<LocalTime>> availability =
+          calculateInMemoryAvailability(admin, adminRules, adminExceptions, adminBooked);
+      ZoneId doctorZone =
+          ZoneId.of(admin.getTimezone() != null ? admin.getTimezone() : "America/Santo_Domingo");
 
       for (Map.Entry<LocalDate, List<LocalTime>> entry : availability.entrySet()) {
         for (LocalTime time : entry.getValue()) {
           ZonedDateTime zdt = ZonedDateTime.of(entry.getKey(), time, doctorZone);
           OffsetDateTime utcTime = zdt.toOffsetDateTime().withOffsetSameInstant(ZoneOffset.UTC);
 
-          globalAvailableSlots.add(new AvailableSlotDTO(
-                  admin.getId(),
-                  admin.getName() + " " + admin.getLastname(),
-                  utcTime
-          ));
+          globalAvailableSlots.add(
+              new AvailableSlotDTO(
+                  admin.getId(), admin.getName() + " " + admin.getLastname(), utcTime));
         }
       }
     }
@@ -148,7 +162,11 @@ public class AppointmentServiceImpl implements AppointmentService {
     return globalAvailableSlots;
   }
 
-  private Map<LocalDate, List<LocalTime>> calculateInMemoryAvailability(User admin, List<ScheduleRule> rules, List<ScheduleException> exceptions, List<Appointment> booked) {
+  private Map<LocalDate, List<LocalTime>> calculateInMemoryAvailability(
+      User admin,
+      List<ScheduleRule> rules,
+      List<ScheduleException> exceptions,
+      List<Appointment> booked) {
     String tz = admin.getTimezone() != null ? admin.getTimezone() : "America/Santo_Domingo";
     ZoneId doctorZone = ZoneId.of(tz);
     LocalDate today = LocalDate.now(doctorZone);
@@ -171,17 +189,15 @@ public class AppointmentServiceImpl implements AppointmentService {
       LocalDate currentDate = today.plusDays(i);
       List<LocalTime> dailySlots = new ArrayList<>();
 
-      List<ScheduleRule> rulesForDay = rules.stream()
-              .filter(r -> r.getDayOfWeek().equals(currentDate.getDayOfWeek()))
-              .toList();
+      List<ScheduleRule> rulesForDay =
+          rules.stream().filter(r -> r.getDayOfWeek().equals(currentDate.getDayOfWeek())).toList();
 
       for (ScheduleRule rule : rulesForDay) {
         dailySlots.addAll(calculateMinutes(rule.getStartTime(), rule.getEndTime(), minutesGap));
       }
 
-      List<ScheduleException> exceptionsForDay = exceptions.stream()
-              .filter(ex -> ex.getDate().equals(currentDate))
-              .toList();
+      List<ScheduleException> exceptionsForDay =
+          exceptions.stream().filter(ex -> ex.getDate().equals(currentDate)).toList();
 
       for (ScheduleException ex : exceptionsForDay) {
         if (ex.getStartTime().equals(ex.getEndTime())) {
@@ -231,7 +247,8 @@ public class AppointmentServiceImpl implements AppointmentService {
     statuses.add(AppointmentStatus.CONFIRMED);
     statuses.add(AppointmentStatus.CANCELLED_REFUND);
     statuses.add(AppointmentStatus.CANCELLED_WITHOUT_REFUND);
-    Page<Appointment> page = repository.findByAdminAndAppointmentStatusIn(admin, statuses, pageable);
+    Page<Appointment> page =
+        repository.findByAdminAndAppointmentStatusIn(admin, statuses, pageable);
     if (page.isEmpty()) {
       return Page.empty();
     }
@@ -244,14 +261,15 @@ public class AppointmentServiceImpl implements AppointmentService {
     Appointment appointment =
         repository.findById(id).orElseThrow(() -> new NotFoundException("Appointment not found"));
     if (!appointment.getUser().equals(user)) {
-      throw new ConflictException("Acceso denegado: No puedes modificar un turno que pertenece a otro paciente.");
+      throw new ConflictException(
+          "Acceso denegado: No puedes modificar un turno que pertenece a otro paciente.");
     }
     OffsetDateTime appointmentDateTime = appointment.getStartTimeUtc();
-    boolean isMoreThan24HoursAhead = OffsetDateTime.now(ZoneOffset.UTC).plusHours(24).isBefore(appointmentDateTime);
+    boolean isMoreThan24HoursAhead =
+        OffsetDateTime.now(ZoneOffset.UTC).plusHours(24).isBefore(appointmentDateTime);
     if (isMoreThan24HoursAhead) {
       processRefundIfApply(appointment, false);
-    }
-    else{
+    } else {
       forcePenaltyCapture(appointment);
     }
     repository.delete(appointment);
@@ -263,21 +281,13 @@ public class AppointmentServiceImpl implements AppointmentService {
     Appointment appointment =
         repository.findById(id).orElseThrow(() -> new NotFoundException("Appointment not found"));
     OffsetDateTime appointmentDateTime = appointment.getStartTimeUtc();
-    boolean isMoreThan24HoursAhead = OffsetDateTime.now(ZoneOffset.UTC).plusHours(24).isBefore(appointmentDateTime);
+    boolean isMoreThan24HoursAhead =
+        OffsetDateTime.now(ZoneOffset.UTC).plusHours(24).isBefore(appointmentDateTime);
     boolean finalRefundDecision = isMoreThan24HoursAhead || refund;
 
     processRefundIfApply(appointment, finalRefundDecision);
 
     repository.delete(appointment);
-  }
-
-  @Override
-  public Page<AppointmentDetailDTO> getAllAppointments(Pageable pageable){
-    Page<Appointment> page = repository.findAll(pageable);
-    if(page.isEmpty()) {
-      return Page.empty();
-    }
-    return page.map(mapper::toDetailDTO);
   }
 
   private void processRefundIfApply(Appointment appointment, boolean adminForcedRefund) {

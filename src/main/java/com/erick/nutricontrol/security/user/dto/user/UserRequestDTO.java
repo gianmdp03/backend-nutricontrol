@@ -2,11 +2,12 @@ package com.erick.nutricontrol.security.user.dto.user;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
-public record UserRequestDTO(@NotBlank String name,
-                             @NotBlank String lastname,
-                             @NotBlank String username,
-                             @NotBlank @Email String email,
-                             @NotBlank String password,
-                             @NotBlank String timezone) {
-}
+public record UserRequestDTO(
+    @NotBlank @Size(max = 50) String name,
+    @NotBlank @Size(max = 50) String lastname,
+    @NotBlank @Size(max = 50) String username,
+    @NotBlank @Email @Size(max = 100) String email,
+    @NotBlank @Size(min = 6, max = 64) String password,
+    @NotBlank @Size(max = 50) String timezone) {}
