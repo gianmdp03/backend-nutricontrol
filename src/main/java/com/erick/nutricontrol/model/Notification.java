@@ -3,8 +3,8 @@ package com.erick.nutricontrol.model;
 import com.erick.nutricontrol._enum.NotificationType;
 import com.erick.nutricontrol.security.user.model.User;
 import jakarta.persistence.*;
-import lombok.*;
 import java.time.OffsetDateTime;
+import lombok.*;
 
 @Entity
 @Table(name = "notifications")
@@ -34,10 +34,8 @@ public class Notification {
     private OffsetDateTime createdAt = OffsetDateTime.now();
 
     @Builder
-    public Notification(User user, String message, NotificationType type, boolean isRead) {
-        this.user = user;
+    public Notification(String message, NotificationType type) {
         this.message = message;
         this.type = type;
-        this.isRead = isRead;
     }
 }

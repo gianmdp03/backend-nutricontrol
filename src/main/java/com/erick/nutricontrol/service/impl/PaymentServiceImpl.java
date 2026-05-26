@@ -1,18 +1,17 @@
 package com.erick.nutricontrol.service.impl;
 
 import com.erick.nutricontrol._enum.AppointmentStatus;
+import com.erick.nutricontrol._enum.NotificationType;
 import com.erick.nutricontrol._enum.PaymentStatus;
 import com.erick.nutricontrol.dto.payment.*;
 import com.erick.nutricontrol.exception.ConflictException;
 import com.erick.nutricontrol.exception.NotFoundException;
 import com.erick.nutricontrol.model.Appointment;
+import com.erick.nutricontrol.model.Notification;
 import com.erick.nutricontrol.model.Payment;
 import com.erick.nutricontrol.repository.AppointmentRepository;
 import com.erick.nutricontrol.repository.PaymentRepository;
-import com.erick.nutricontrol.service.EmailService;
-import com.erick.nutricontrol.service.GoogleMeetService;
-import com.erick.nutricontrol.service.PDFGeneratorService;
-import com.erick.nutricontrol.service.PaymentService;
+import com.erick.nutricontrol.service.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.paypal.sdk.PaypalServerSdkClient;
 import com.paypal.sdk.controllers.OrdersController;
@@ -20,6 +19,11 @@ import com.paypal.sdk.controllers.PaymentsController;
 import com.paypal.sdk.exceptions.ApiException;
 import com.paypal.sdk.http.response.ApiResponse;
 import com.paypal.sdk.models.*;
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,12 +34,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
-
-import java.io.IOException;
-import java.math.BigDecimal;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -48,6 +46,7 @@ public class PaymentServiceImpl implements PaymentService {
   private final PDFGeneratorService pdfGeneratorService;
   private final EmailService emailService;
   private final GoogleMeetService googleMeetService;
+  private final NotificationService notificationService;
 
   @Value("${paypal.return-url}")
   private String returnUrl;
@@ -114,7 +113,12 @@ public class PaymentServiceImpl implements PaymentService {
             .status(PaymentStatus.PENDING)
             .build();
     repository.save(payment);
-
+    Notification notification =
+        Notification.builder()
+            .type(NotificationType.ADMIN_APPOINTMENT_CONFIRMED)
+            .message("Un usuario sacó un nuevo turno")
+            .build();
+    notificationService.createNotification(appointment.getAdmin(), notification);
     return new PaymentOrderResponseDTO(order.getId(), approveLink);
   }
 
@@ -170,7 +174,8 @@ public class PaymentServiceImpl implements PaymentService {
 
     try {
       byte[] pdfBytes =
-          pdfGeneratorService.generateAppointmentReceipt(patientName, appointmentDate, appointmentTime, doctorName);
+          pdfGeneratorService.generateAppointmentReceipt(
+              patientName, appointmentDate, appointmentTime, doctorName);
       String subject = "NutriControl - Comprobante de reserva de turno";
       String body =
           "Hola "
@@ -178,7 +183,10 @@ public class PaymentServiceImpl implements PaymentService {
               + ",\n\nAdjuntamos el comprobante de tu turno confirmado.\n¡Te esperamos!";
 
       if (meetLink != null) {
-        body += "\nPara ingresar a la videollamada el día del turno, utiliza el siguiente enlace: " + meetLink + "\n";
+        body +=
+            "\nPara ingresar a la videollamada el día del turno, utiliza el siguiente enlace: "
+                + meetLink
+                + "\n";
       }
 
       body += "\n¡Te esperamos!";
@@ -282,7 +290,10 @@ public class PaymentServiceImpl implements PaymentService {
       appointmentRepository.save(appointment);
     } else if ("PAYMENT.CAPTURE.COMPLETED".equals(eventType)) {
       appointment.getPayments().stream()
-          .filter(p -> p.getStatus() == PaymentStatus.AUTHORIZED || p.getStatus() == PaymentStatus.PENDING)
+          .filter(
+              p ->
+                  p.getStatus() == PaymentStatus.AUTHORIZED
+                      || p.getStatus() == PaymentStatus.PENDING)
           .findFirst()
           .ifPresent(
               p -> {

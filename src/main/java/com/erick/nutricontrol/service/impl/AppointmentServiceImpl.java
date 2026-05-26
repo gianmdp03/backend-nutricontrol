@@ -21,7 +21,7 @@ import com.erick.nutricontrol.security.user.Enum.Role;
 import com.erick.nutricontrol.security.user.model.User;
 import com.erick.nutricontrol.security.user.repository.UserRepository;
 import com.erick.nutricontrol.service.AppointmentService;
-import com.erick.nutricontrol.service.EmailService;
+import com.erick.nutricontrol.service.NotificationService;
 import com.erick.nutricontrol.service.PaymentService;
 import com.paypal.sdk.exceptions.ApiException;
 import java.io.IOException;
@@ -44,7 +44,7 @@ public class AppointmentServiceImpl implements AppointmentService {
   private final ScheduleRuleRepository scheduleRuleRepository;
   private final ScheduleExceptionRepository scheduleExceptionRepository;
   private final UserRepository userRepository;
-  private final EmailService emailService;
+  private final NotificationService notificationService;
   private final PaymentService paymentService;
 
   @Value("${nutricontrol.appointments.days}")
