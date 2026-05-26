@@ -10,6 +10,8 @@ import com.erick.nutricontrol.repository.AppointmentRepository;
 import com.erick.nutricontrol.repository.ReviewRepository;
 import com.erick.nutricontrol.security.user.model.User;
 import com.erick.nutricontrol.service.ReviewService;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -17,31 +19,39 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-@Transactional(readOnly=true)
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class ReviewServiceImpl implements ReviewService {
-    private final ReviewRepository repository;
-    private final ReviewMapper mapper;
-    private final AppointmentRepository appointmentRepository;
+  private final ReviewRepository repository;
+  private final ReviewMapper mapper;
+  private final AppointmentRepository appointmentRepository;
 
-    @Override
-    @Transactional
-    public ReviewDetailDTO addReview(User user, ReviewRequestDTO dto) {
-        Review review = mapper.toEntity(dto);
-        Appointment appointment = appointmentRepository.findById(dto.appointmentId()).orElseThrow(()-> new NotFoundException("Appointment not found"));
-        review.setAppointment(appointment);
-        review.setUser(user);
-        review.setAdmin(appointment.getAdmin());
-        review = repository.save(review);
-        return mapper.toDetailDto(review);
-    }
+  @Override
+  @Transactional
+  public ReviewDetailDTO addReview(User user, ReviewRequestDTO dto) {
+    Review review = mapper.toEntity(dto);
+    Appointment appointment =
+        appointmentRepository
+            .findById(dto.appointmentId())
+            .orElseThrow(() -> new NotFoundException("Appointment not found"));
+    review.setAppointment(appointment);
+    review.setUser(user);
+    User admin = appointment.getAdmin();
+    review.setAdmin(admin);
+    review = repository.save(review);
+    BigDecimal totalScoreBD = BigDecimal.valueOf(admin.getTotalScore());
+    BigDecimal countBD = BigDecimal.valueOf(admin.getReviewCount());
+    BigDecimal averageBD = totalScoreBD.divide(countBD, 2, RoundingMode.HALF_UP);
+    admin.setAverageRating(averageBD.doubleValue());
+    return mapper.toDetailDto(review);
+  }
 
-    @Override
-    public Page<ReviewDetailDTO> listAdminReviews(User admin, Pageable pageable) {
-        Page<Review> page = repository.findByAdmin(admin, pageable);
-        if(page.isEmpty()){
-            return Page.empty();
-        }
-        return page.map(mapper::toDetailDto);
+  @Override
+  public Page<ReviewDetailDTO> listAdminReviews(User admin, Pageable pageable) {
+    Page<Review> page = repository.findByAdmin(admin, pageable);
+    if (page.isEmpty()) {
+      return Page.empty();
     }
+    return page.map(mapper::toDetailDto);
+  }
 }

@@ -21,61 +21,82 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
-    private final JwtAuthenticationFilter jwtAuthFilter;
-    private final AuthenticationProvider authenticationProvider;
+  private final JwtAuthenticationFilter jwtAuthFilter;
+  private final AuthenticationProvider authenticationProvider;
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-                .csrf(AbstractHttpConfigurer::disable)
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .authorizeHttpRequests(auth -> auth
-                        //APPOINTMENTS
-                        .requestMatchers("/api/appointments/admin").hasRole("ADMIN")
-                        .requestMatchers("/api/appointments/**").hasRole("PATIENT")
-                        //MEDICALRECORD
+  @Bean
+  public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    http.csrf(AbstractHttpConfigurer::disable)
+        .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+        .authorizeHttpRequests(
+            auth ->
+                auth
+                    // APPOINTMENTS
+                    .requestMatchers("/api/appointments/admin")
+                    .hasRole("ADMIN")
+                    .requestMatchers("/api/appointments/**")
+                    .hasRole("PATIENT")
+                    // MEDICALRECORD
+                    .requestMatchers("/api/medical-records")
+                    .hasRole("PATIENT")
+                    .requestMatchers("/api/medical-records/admin")
+                    .hasRole("ADMIN")
+                    // PAYMENT
+                    .requestMatchers("/api/payments/webhook")
+                    .permitAll() // PayPal no tiene token, debe entrar libre
+                    .requestMatchers("/api/payments/**")
+                    .hasAnyRole("PATIENT", "ADMIN") // Tu frontend sí tiene token
+                    // SCHEDULEEXCEPTION
+                    .requestMatchers("/api/schedule-exceptions/**")
+                    .hasRole("ADMIN")
+                    // SCHEDULERULE
+                    .requestMatchers("/api/schedule-rules/**")
+                    .hasRole("ADMIN")
+                    // SERVICE
+                    .requestMatchers("/api/services/public")
+                    .permitAll()
+                    .requestMatchers("/api/services/**")
+                    .hasRole("ADMIN")
+                    // NOTIFICATION
+                    .requestMatchers("/api/notifications/**")
+                    .hasAnyRole("PATIENT", "ADMIN")
+                    // REVIEW
+                    .requestMatchers("/api/reviews")
+                    .hasRole("PATIENT")
+                    .requestMatchers("/api/reviews/admin")
+                    .hasRole("ADMIN")
+                    // AUTHENTICATION
+                    .requestMatchers("/api/auth/logged/**")
+                    .hasAnyRole("ADMIN", "PATIENT")
+                    .requestMatchers("/api/auth/admin/**")
+                    .hasRole("ADMIN")
+                    .requestMatchers("/api/auth/**", "/ws/**")
+                    .permitAll()
+                    .requestMatchers("/api/auth/login", "/api/auth/register", "/api/auth/oauth")
+                    .permitAll()
+                    .anyRequest()
+                    .authenticated())
+        .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        .authenticationProvider(authenticationProvider)
+        .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
-                        //PAYMENT
-                        .requestMatchers("/api/payments/webhook").permitAll() // PayPal no tiene token, debe entrar libre
-                        .requestMatchers("/api/payments/**").hasAnyRole("PATIENT", "ADMIN") // Tu frontend sí tiene token
+    return http.build();
+  }
 
-                        //SCHEDULEEXCEPTION
-                        .requestMatchers("/api/schedule-exceptions").hasRole("ADMIN")
-                        //SCHEDULERULE
-                        .requestMatchers("/api/schedule-rules").hasRole("ADMIN")
-                        //SERVICE
-                        .requestMatchers("/api/services/public").permitAll()
-                        .requestMatchers("/api/services/**").hasRole("ADMIN")
-                        //NOTIFICATION
-                        .requestMatchers("/api/notifications/**").hasAnyRole("PATIENT", "ADMIN")
-                        //REVIEW
-                        .requestMatchers("/api/reviews").hasRole("PATIENT")
-                        .requestMatchers("/api/reviews/admin").hasRole("ADMIN")
-                        //AUTHENTICATION
-                        .requestMatchers("/api/auth/logged/**").hasAnyRole("ADMIN", "PATIENT")
-                        .requestMatchers("/api/auth/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/api/auth/**", "/ws/**").permitAll()
-                        .requestMatchers("/api/auth/login",
-                                "/api/auth/register",
-                                "/api/auth/oauth").permitAll()
-                        .anyRequest().authenticated()
-                )
-                .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authenticationProvider(authenticationProvider)
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+  @Bean
+  public CorsConfigurationSource corsConfigurationSource() {
+    CorsConfiguration configuration = new CorsConfiguration();
+    configuration.setAllowedOrigins(
+        List.of(
+            "http://localhost:4200",
+            "http://localhost:50093",
+            "http://localhost:3000",
+            "http://190.191.214.105:3000"));
+    configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+    configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
 
-        return http.build();
-    }
-
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:4200", "http://localhost:50093","http://localhost:3000", "http://190.191.214.105:3000"));
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
-
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
-        return source;
-    }
+    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    source.registerCorsConfiguration("/**", configuration);
+    return source;
+  }
 }
