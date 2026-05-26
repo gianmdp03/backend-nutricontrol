@@ -21,14 +21,12 @@ import org.springframework.web.filter.OncePerRequestFilter;
 public class RateLimitingFilter extends OncePerRequestFilter {
   private final Map<String, Bucket> cache = new ConcurrentHashMap<>();
 
-    private Bucket createNewBucket() {
-        Bandwidth limit = Bandwidth.builder()
-                .capacity(50)
-                .refillGreedy(50, Duration.ofMinutes(1))
-                .build();
+  private Bucket createNewBucket() {
+    Bandwidth limit =
+        Bandwidth.builder().capacity(50).refillGreedy(50, Duration.ofMinutes(1)).build();
 
-        return Bucket.builder().addLimit(limit).build();
-    }
+    return Bucket.builder().addLimit(limit).build();
+  }
 
   @Override
   protected void doFilterInternal(
