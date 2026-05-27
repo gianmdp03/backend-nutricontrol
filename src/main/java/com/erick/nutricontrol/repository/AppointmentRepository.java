@@ -34,4 +34,10 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
     List<Appointment> findPastConfirmedAppointments(@Param("now") OffsetDateTime now);
     @Query("SELECT a FROM Appointment a WHERE a.appointmentStatus = 'USER_DIDNT_COME' AND a.endTimeUtc <= :thirtyDaysAgo")
     List<Appointment> findOldUnattendedAppointments(@Param("thirtyDaysAgo") OffsetDateTime thirtyDaysAgo);
+
+    @Query("SELECT a FROM Appointment a WHERE a.appointmentStatus = :status AND a.startTimeUtc <= :windowEnd AND a.startTimeUtc > :now AND a.reminder24hSent = false")
+    List<Appointment> findAppointmentsFor24hReminder(@Param("status") AppointmentStatus status, @Param("now") OffsetDateTime now, @Param("windowEnd") OffsetDateTime windowEnd);
+
+    @Query("SELECT a FROM Appointment a WHERE a.appointmentStatus = :status AND a.startTimeUtc <= :windowEnd AND a.startTimeUtc > :now AND a.reminder15mSent = false")
+    List<Appointment> findAppointmentsFor15mReminder(@Param("status") AppointmentStatus status, @Param("now") OffsetDateTime now, @Param("windowEnd") OffsetDateTime windowEnd);
 }

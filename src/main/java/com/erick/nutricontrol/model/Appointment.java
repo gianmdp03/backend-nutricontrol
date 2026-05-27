@@ -3,13 +3,12 @@ package com.erick.nutricontrol.model;
 import com.erick.nutricontrol._enum.AppointmentStatus;
 import com.erick.nutricontrol.security.user.model.User;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
 import java.time.*;
 import java.util.HashSet;
 import java.util.Set;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Getter
@@ -56,6 +55,12 @@ public class Appointment {
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
+
+    @Column(name = "reminder_24h_sent", nullable = false)
+    private boolean reminder24hSent = false;
+
+    @Column(name = "reminder_15m_sent", nullable = false)
+    private boolean reminder15mSent = false;
 
     public Appointment(LocalDate date, LocalTime startTime, LocalTime endTime, User user, User admin, AppointmentStatus appointmentStatus) {
         this.date = date;

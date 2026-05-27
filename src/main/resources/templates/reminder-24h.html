@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Recordatorio de Turno</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8fafc;
+            margin: 0;
+            padding: 0;
+            color: #334155;
+        }
+
+        .wrapper {
+            width: 100%;
+            table-layout: fixed;
+            background-color: #f8fafc;
+            padding: 40px 0;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            overflow: hidden;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+
+        .header {
+            background-color: #059669;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            color: #ffffff;
+            margin: 0;
+            font-size: 24px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .content {
+            padding: 40px 30px;
+            line-height: 1.6;
+        }
+
+        .greeting {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 12px;
+        }
+
+        .card {
+            background-color: #f1f5f9;
+            border-left: 4px solid #10b981;
+            padding: 20px;
+            border-radius: 0 8px 8px 0;
+            margin: 25px 0;
+        }
+
+        .card-title {
+            font-weight: bold;
+            color: #0f172a;
+            margin-bottom: 8px;
+            font-size: 15px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .detail-item {
+            margin: 6px 0;
+            font-size: 15px;
+        }
+
+        .detail-label {
+            font-weight: 600;
+            color: #475569;
+        }
+
+        .notice {
+            font-size: 14px;
+            color: #64748b;
+            background-color: #f8fafc;
+            border: 1px dashed #cbd5e1;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 30px;
+            text-align: center;
+        }
+
+        .footer {
+            background-color: #f1f5f9;
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #94a3b8;
+            border-top: 1px solid #e2e8f0;
+        }
+    </style>
+</head>
+<body>
+<div class="wrapper">
+    <div class="container">
+        <div class="header">
+            <h1>NutriControl</h1>
+        </div>
+        <div class="content">
+            <p class="greeting">¡Hola, <span th:text="${patientName}">Paciente</span>!</p>
+            <p>Te recordamos que tenés un turno programado para el día de mañana. A continuación, te compartimos los
+                detalles de tu consulta:</p>
+
+            <div class="card">
+                <div class="card-title">Detalles de la Cita</div>
+                <div class="detail-item"><span class="detail-label">Profesional:</span> <span th:text="${doctorName}">Nutricionista</span>
+                </div>
+                <div class="detail-item"><span class="detail-label">Fecha y Hora:</span> <span
+                        th:text="${appointmentTime}">Mañana</span></div>
+            </div>
+
+            <p>Recordá que para garantizar la calidad del servicio, te sugerimos estar listo unos minutos antes.</p>
+
+            <div class="notice">
+                El botón para ingresar a la videollamada se habilitará en nuestra plataforma <strong>15 minutos
+                antes</strong> del horario agendado.
+            </div>
+        </div>
+        <div class="footer">
+            Este es un mensaje automático enviado por NutriControl. Por favor no respondas a este correo.
+        </div>
+    </div>
+</div>
+</body>
+</html>
