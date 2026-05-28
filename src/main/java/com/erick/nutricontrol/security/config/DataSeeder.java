@@ -15,46 +15,46 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @Configuration
 @Slf4j
 public class DataSeeder {
-    private final UserRepository userRepository;
+  private final UserRepository userRepository;
 
-    @Value("${nutricontrol.initial-admin.name}")
-    private String name;
+  @Value("${nutricontrol.initial-admin.name}")
+  private String name;
 
-    @Value("${nutricontrol.initial-admin.lastname}")
-    private String lastname;
+  @Value("${nutricontrol.initial-admin.lastname}")
+  private String lastname;
 
-    @Value("${nutricontrol.initial-admin.email}")
-    private String email;
+  @Value("${nutricontrol.initial-admin.email}")
+  private String email;
 
-    @Value("${nutricontrol.initial-admin.username}")
-    private String username;
+  @Value("${nutricontrol.initial-admin.username}")
+  private String username;
 
-    @Value("${nutricontrol.initial-admin.password}")
-    private String password;
+  @Value("${nutricontrol.initial-admin.password}")
+  private String password;
 
-    @Value("${nutricontrol.initial-user.name}")
-    private String userName;
+  @Value("${nutricontrol.initial-user.name}")
+  private String userName;
 
-    @Value("${nutricontrol.initial-user.lastname}")
-    private String userLastname;
+  @Value("${nutricontrol.initial-user.lastname}")
+  private String userLastname;
 
-    @Value("${nutricontrol.initial-user.email}")
-    private String userEmail;
+  @Value("${nutricontrol.initial-user.email}")
+  private String userEmail;
 
-    @Value("${nutricontrol.initial-user.username}")
-    private String userUsername;
+  @Value("${nutricontrol.initial-user.username}")
+  private String userUsername;
 
-    @Value("${nutricontrol.initial-user.password}")
-    private String userPassword;
+  @Value("${nutricontrol.initial-user.password}")
+  private String userPassword;
 
-    @Value("${nutricontrol.initial-admin.timezone}")
-    private String timezone;
+  @Value("${nutricontrol.initial-admin.timezone}")
+  private String timezone;
 
-    @Value("${nutricontrol.initial-user.timezone}")
-    private String userTimezone;
+  @Value("${nutricontrol.initial-user.timezone}")
+  private String userTimezone;
 
-    @Bean
-    CommandLineRunner initDatabase(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+  @Bean
+  CommandLineRunner initDatabase(UserRepository userRepository, PasswordEncoder passwordEncoder) {
     return args -> {
       String adminEmail = email;
       String aux = userEmail;
@@ -112,5 +112,5 @@ public class DataSeeder {
                 log.info("PACIENTE INICIAL CREADO");
               });
     };
-    }
+  }
 }

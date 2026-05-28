@@ -25,13 +25,18 @@ public class AdminPreset {
   @Column(nullable = false)
   private String exequatur;
 
-  @OneToOne
-  @JoinColumn(name = "user_id")
+  @OneToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "user_id", nullable = false, unique = true)
   private User user;
 
-  public AdminPreset(String adminName, String specialty, String exequatur) {
+  public AdminPreset(String adminName, String specialty, String exequatur, User user) {
     this.adminName = adminName;
     this.specialty = specialty;
     this.exequatur = exequatur;
+    this.user = user;
+
+    if (user != null) {
+      user.setAdminPreset(this);
+    }
   }
 }

@@ -51,7 +51,7 @@ public class User implements UserDetails {
   @Column(name = "role", length = 20, nullable = false)
   private Role role;
 
-  @OneToOne(mappedBy = "user")
+  @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
   private AdminPreset adminPreset;
 
   private int reviewCount = 0;
