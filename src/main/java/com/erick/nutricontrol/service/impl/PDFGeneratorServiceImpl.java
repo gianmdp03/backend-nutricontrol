@@ -18,7 +18,7 @@ import org.xhtmlrenderer.pdf.ITextRenderer;
 @RequiredArgsConstructor
 public class PDFGeneratorServiceImpl implements PDFGeneratorService {
   private final TemplateEngine templateEngine;
-  private static final String RECETA_TEMPLATE = "templates/receta_base.pdf";
+  private static final String RECETA_TEMPLATE = "templates/receta_medica.pdf";
 
   @Override
   public byte[] generateAppointmentReceipt(

@@ -10,7 +10,9 @@ public interface MedicalCertificateService {
   MedicalCertificateDetailDTO createMedicalCertificate(
       User admin, MedicalCertificateRequestDTO dto);
 
-  Page<MedicalCertificateDetailDTO> getAllUserMedicalCertificate(User user, Pageable pageable);
+  Page<MedicalCertificateDetailDTO> getAllUserMedicalCertificates(User user, Pageable pageable);
+
+  Page<MedicalCertificateDetailDTO> adminGetUserMedicalCertificates(Long userId, Pageable pageable);
 
   byte[] getPDFMedicalCertificate(User user, Long id);
 }

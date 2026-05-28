@@ -30,12 +30,20 @@ public class MedicalCertificateController {
         .body(service.createMedicalCertificate(admin, dto));
   }
 
-  @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-  @GetMapping
+  @PreAuthorize("hasAuthority('ROLE_PATIENT')")
+  @GetMapping("/user")
   public ResponseEntity<Page<MedicalCertificateDetailDTO>> getAllUserMedicalCertificate(
       @AuthenticationPrincipal User user, Pageable pageable) {
     return ResponseEntity.status(HttpStatus.OK)
-        .body(service.getAllUserMedicalCertificate(user, pageable));
+        .body(service.getAllUserMedicalCertificates(user, pageable));
+  }
+
+  @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+  @GetMapping("/admin/{id}")
+  public ResponseEntity<Page<MedicalCertificateDetailDTO>> adminGetUserMedicalCertificate(
+      @PathVariable Long userId, Pageable pageable) {
+    return ResponseEntity.status(HttpStatus.OK)
+        .body(service.adminGetUserMedicalCertificates(userId, pageable));
   }
 
   @PreAuthorize("hasAuthority('ROLE_PATIENT')")

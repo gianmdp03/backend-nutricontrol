@@ -11,5 +11,7 @@ public interface PrescriptionService {
 
   Page<PrescriptionDetailDTO> getAllUserPrescriptions(User user, Pageable pageable);
 
+  Page<PrescriptionDetailDTO> adminGetUserPrescriptions(Long userId, Pageable pageable);
+
   byte[] getPDFPrescription(User user, Long id);
 }

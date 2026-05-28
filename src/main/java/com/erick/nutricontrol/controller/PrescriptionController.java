@@ -17,7 +17,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/prescription")
+@RequestMapping("/api/prescriptions")
 @RequiredArgsConstructor
 public class PrescriptionController {
   private final PrescriptionService service;
@@ -29,12 +29,20 @@ public class PrescriptionController {
     return ResponseEntity.status(HttpStatus.CREATED).body(service.createPrescription(admin, dto));
   }
 
-  @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-  @GetMapping
+  @PreAuthorize("hasAuthority('ROLE_PATIENT')")
+  @GetMapping("/user")
   public ResponseEntity<Page<PrescriptionDetailDTO>> getAllUserPrescriptions(
       @AuthenticationPrincipal User user, Pageable pageable) {
     return ResponseEntity.status(HttpStatus.OK)
         .body(service.getAllUserPrescriptions(user, pageable));
+  }
+
+  @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+  @GetMapping("/admin/{id}")
+  public ResponseEntity<Page<PrescriptionDetailDTO>> adminGetUserPrescriptions(
+      @PathVariable Long userId, Pageable pageable) {
+    return ResponseEntity.status(HttpStatus.OK)
+        .body(service.adminGetUserPrescriptions(userId, pageable));
   }
 
   @PreAuthorize("hasAuthority('ROLE_PATIENT')")

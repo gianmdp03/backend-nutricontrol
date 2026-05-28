@@ -66,6 +66,22 @@ public class PrescriptionServiceImpl implements PrescriptionService {
   }
 
   @Override
+  public Page<PrescriptionDetailDTO> adminGetUserPrescriptions(Long userId, Pageable pageable) {
+    User user =
+        userRepository.findById(userId).orElseThrow(() -> new NotFoundException("User not found"));
+    Page<Prescription> page = repository.findByUser(user, pageable);
+    if (page.isEmpty()) {
+      return Page.empty();
+    }
+    String userTimezone = user.getTimezone();
+    return page.map(
+        prescription -> {
+          String formattedDate = convertFromUtcToTimezone(prescription.getDateTime(), userTimezone);
+          return mapper.toDetailDto(prescription, formattedDate);
+        });
+  }
+
+  @Override
   public byte[] getPDFPrescription(User user, Long id) {
     Prescription prescription =
         repository

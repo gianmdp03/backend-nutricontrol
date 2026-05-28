@@ -53,7 +53,7 @@ public class MedicalCertificateServiceImpl implements MedicalCertificateService 
   }
 
   @Override
-  public Page<MedicalCertificateDetailDTO> getAllUserMedicalCertificate(
+  public Page<MedicalCertificateDetailDTO> getAllUserMedicalCertificates(
       User user, Pageable pageable) {
     Page<MedicalCertificate> page = repository.findByUser(user, pageable);
     if (page.isEmpty()) {
@@ -64,6 +64,24 @@ public class MedicalCertificateServiceImpl implements MedicalCertificateService 
         certificate -> {
           String formattedDate = convertFromUtcToTimezone(certificate.getDateTime(), userTimezone);
           return mapper.toDetailDto(certificate, formattedDate);
+        });
+  }
+
+  @Override
+  public Page<MedicalCertificateDetailDTO> adminGetUserMedicalCertificates(
+      Long userId, Pageable pageable) {
+    User user =
+        userRepository.findById(userId).orElseThrow(() -> new NotFoundException("User not found"));
+    Page<MedicalCertificate> page = repository.findByUser(user, pageable);
+    if (page.isEmpty()) {
+      return Page.empty();
+    }
+    String userTimezone = user.getTimezone();
+    return page.map(
+        medicalCertificate -> {
+          String formattedDate =
+              convertFromUtcToTimezone(medicalCertificate.getDateTime(), userTimezone);
+          return mapper.toDetailDto(medicalCertificate, formattedDate);
         });
   }
 
