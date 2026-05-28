@@ -55,59 +55,62 @@ public class DataSeeder {
 
     @Bean
     CommandLineRunner initDatabase(UserRepository userRepository, PasswordEncoder passwordEncoder) {
-        return args -> {
-            String adminEmail = email;
-            String aux = userEmail;
-            userRepository.findByEmail(adminEmail).ifPresentOrElse(
-                    (existingAdmin) -> {
-                        existingAdmin.setName(name);
-                        existingAdmin.setLastname(lastname);
-                        existingAdmin.setUsername(username);
-                        existingAdmin.setPassword(passwordEncoder.encode(password));
-                        existingAdmin.setRole(Role.ROLE_ADMIN);
-                        existingAdmin.setTimezone(timezone);
+    return args -> {
+      String adminEmail = email;
+      String aux = userEmail;
+      userRepository
+          .findByEmail(adminEmail)
+          .ifPresentOrElse(
+              (existingAdmin) -> {
+                existingAdmin.setName(name);
+                existingAdmin.setLastname(lastname);
+                existingAdmin.setUsername(username);
+                existingAdmin.setPassword(passwordEncoder.encode(password));
+                existingAdmin.setRole(Role.ROLE_ADMIN);
+                existingAdmin.setTimezone(timezone);
 
-                        userRepository.save(existingAdmin);
-                        log.info("DATOS DE ADMINISTRADOR ACTUALIZADOS AUTOMÁTICAMENTE");
-                    },
-                    () -> {
-                        User admin = new User();
-                        admin.setEmail(adminEmail);
-                        admin.setName(name);
-                        admin.setLastname(lastname);
-                        admin.setUsername(username);
-                        admin.setPassword(passwordEncoder.encode(password));
-                        admin.setRole(Role.ROLE_ADMIN);
-                        admin.setTimezone(timezone);
-                        userRepository.save(admin);
-                        log.info("ADMINISTRADOR INICIAL CREADO");
-                    }
-            );
+                userRepository.save(existingAdmin);
+                log.info("DATOS DE ADMINISTRADOR ACTUALIZADOS AUTOMÁTICAMENTE");
+              },
+              () -> {
+                User admin = new User();
+                admin.setEmail(adminEmail);
+                admin.setName(name);
+                admin.setLastname(lastname);
+                admin.setUsername(username);
+                admin.setPassword(passwordEncoder.encode(password));
+                admin.setRole(Role.ROLE_ADMIN);
+                admin.setTimezone(timezone);
 
-            userRepository.findByEmail(userEmail).ifPresentOrElse(
-                    (existingUser) -> {
-                        existingUser.setName(userName);
-                        existingUser.setLastname(userLastname);
-                        existingUser.setUsername(userUsername);
-                        existingUser.setPassword(passwordEncoder.encode(userPassword));
-                        existingUser.setRole(Role.ROLE_PATIENT);
-                        existingUser.setTimezone(userTimezone);
-                        userRepository.save(existingUser);
-                        log.info("DATOS DE PACIENTE ACTUALIZADOS AUTOMÁTICAMENTE");
-                    },
-                    () -> {
-                        User user = new User();
-                        user.setEmail(userEmail);
-                        user.setName(userName);
-                        user.setLastname(userLastname);
-                        user.setUsername(userUsername);
-                        user.setPassword(passwordEncoder.encode(userPassword));
-                        user.setRole(Role.ROLE_PATIENT);
-                        user.setTimezone(userTimezone);
-                        userRepository.save(user);
-                        log.info("PACIENTE INICIAL CREADO");
-                    }
-            );
-        };
+                userRepository.save(admin);
+                log.info("ADMINISTRADOR INICIAL CREADO");
+              });
+
+      userRepository
+          .findByEmail(userEmail)
+          .ifPresentOrElse(
+              (existingUser) -> {
+                existingUser.setName(userName);
+                existingUser.setLastname(userLastname);
+                existingUser.setUsername(userUsername);
+                existingUser.setPassword(passwordEncoder.encode(userPassword));
+                existingUser.setRole(Role.ROLE_PATIENT);
+                existingUser.setTimezone(userTimezone);
+                userRepository.save(existingUser);
+                log.info("DATOS DE PACIENTE ACTUALIZADOS AUTOMÁTICAMENTE");
+              },
+              () -> {
+                User user = new User();
+                user.setEmail(userEmail);
+                user.setName(userName);
+                user.setLastname(userLastname);
+                user.setUsername(userUsername);
+                user.setPassword(passwordEncoder.encode(userPassword));
+                user.setRole(Role.ROLE_PATIENT);
+                user.setTimezone(userTimezone);
+                userRepository.save(user);
+                log.info("PACIENTE INICIAL CREADO");
+              });
+    };
     }
 }

@@ -1,5 +1,6 @@
 package com.erick.nutricontrol.security.user.model;
 
+import com.erick.nutricontrol.model.AdminPreset;
 import com.erick.nutricontrol.security.user.Enum.Role;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
@@ -49,6 +50,9 @@ public class User implements UserDetails {
   @Enumerated(EnumType.STRING)
   @Column(name = "role", length = 20, nullable = false)
   private Role role;
+
+  @OneToOne(mappedBy = "user")
+  private AdminPreset adminPreset;
 
   private int reviewCount = 0;
 

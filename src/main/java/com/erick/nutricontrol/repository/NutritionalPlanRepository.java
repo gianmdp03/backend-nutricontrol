@@ -1,3 +1,5 @@
 package com.erick.nutricontrol.repository;
 
-public interface NutritionalPlanRepository {}
+
+/*@Repository
+public interface NutritionalPlanRepository extends JpaRepository<NutritionalPlan, Long> {}*/

@@ -2,7 +2,7 @@ package com.erick.nutricontrol.model;
 
 import com.erick.nutricontrol.security.user.model.User;
 import jakarta.persistence.*;
-import java.time.LocalDate;
+import java.time.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -23,6 +23,9 @@ public class Prescription {
   @Column(nullable = false)
   private String age;
 
+  @Column(columnDefinition = "TEXT")
+  private String textareaTexto;
+
   @Column(nullable = false)
   private String adminName;
 
@@ -33,19 +36,16 @@ public class Prescription {
   private String exequatur;
 
   @Column(nullable = false)
-  private LocalDate date;
+  private OffsetDateTime dateTime = OffsetDateTime.now(ZoneOffset.UTC);
 
   @ManyToOne
   @JoinColumn(name = "user_id", nullable = false)
   private User user;
 
-    public Prescription(String patientName, String age, String adminName, String specialty, String exequatur, LocalDate date, User user) {
-        this.patientName = patientName;
-        this.age = age;
-        this.adminName = adminName;
-        this.specialty = specialty;
-        this.exequatur = exequatur;
-        this.date = date;
-        this.user = user;
-    }
+  public Prescription(String patientName, String age, String textareaTexto, User user) {
+    this.patientName = patientName;
+    this.age = age;
+    this.textareaTexto = textareaTexto;
+    this.user = user;
+  }
 }

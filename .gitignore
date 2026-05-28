@@ -34,3 +34,4 @@ build/
 src/main/resources/secrets.properties
 logs/nutricontrol-app.log
 src/main/resources/templates/receta_medica.pdf
+/logs
