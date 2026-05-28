@@ -12,10 +12,18 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 public interface AppointmentService {
-    PaymentOrderResponseDTO addAppointment(User user, AppointmentRequestDTO dto) throws IOException, ApiException;
-    List<AvailableSlotDTO> getAvailableAppointments();
-    Page<AppointmentDetailDTO> listUserAppointments(User user, Pageable pageable);
-    Page<AppointmentDetailDTO> listAdminAppointments(User user, Pageable pageable);
-    void deleteAppointment(Long id, User user);
-    void adminDeleteAppointment(Long id, boolean refund);
+  PaymentOrderResponseDTO addAppointment(User user, AppointmentRequestDTO dto)
+      throws IOException, ApiException;
+
+  List<AvailableSlotDTO> getAvailableAppointments();
+
+  Page<AppointmentDetailDTO> listUserAppointments(User user, Pageable pageable);
+
+  Page<AppointmentDetailDTO> listAdminAppointments(User user, Pageable pageable);
+
+  AppointmentDetailDTO getAppointmentById(User user, Long id);
+
+  void deleteAppointment(Long id, User user);
+
+  void adminDeleteAppointment(Long id, boolean refund);
 }

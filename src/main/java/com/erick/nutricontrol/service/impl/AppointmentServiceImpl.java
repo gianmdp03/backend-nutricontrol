@@ -256,6 +256,23 @@ public class AppointmentServiceImpl implements AppointmentService {
   }
 
   @Override
+  public AppointmentDetailDTO getAppointmentById(User user, Long id) {
+    Appointment appointment = repository.findById(id).orElseThrow(() -> new NotFoundException("Appointment not found"));
+    if(user.getRole().equals(Role.ROLE_ADMIN)){
+      if(appointment.getAdmin() != user){
+        throw new BadRequestException("Bad Request");
+      }
+    }
+    if(user.getRole().equals(Role.ROLE_PATIENT)){
+      if(appointment.getUser() != user){
+        throw new BadRequestException("Bad Request");
+      }
+    }
+
+    return mapper.toDetailDTO(appointment);
+  }
+
+  @Override
   @Transactional
   public void deleteAppointment(Long id, User user) {
     Appointment appointment =

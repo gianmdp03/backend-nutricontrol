@@ -51,6 +51,12 @@ public class AppointmentController {
         return ResponseEntity.status(HttpStatus.OK).body(service.listAdminAppointments(user, pageable));
     }
 
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_PATIENT')")
+    @GetMapping("/by-id/{id}")
+    public ResponseEntity<AppointmentDetailDTO> getAppointmentById(@AuthenticationPrincipal User user, @PathVariable Long id){
+        return ResponseEntity.status(HttpStatus.OK).body(service.getAppointmentById(user, id));
+    }
+
     @PreAuthorize("hasAuthority('ROLE_PATIENT')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteAppointment(@PathVariable Long id, @AuthenticationPrincipal User user){
