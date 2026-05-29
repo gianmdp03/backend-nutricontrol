@@ -25,49 +25,60 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/appointments")
 @RequiredArgsConstructor
 public class AppointmentController {
-    private final AppointmentService service;
+  private final AppointmentService service;
 
-    @PreAuthorize("hasAuthority('ROLE_PATIENT')")
-    @PostMapping
-    public ResponseEntity<PaymentOrderResponseDTO> addAppointment(@AuthenticationPrincipal User user, @Valid @RequestBody AppointmentRequestDTO dto) throws IOException, ApiException {
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.addAppointment(user, dto));
-    }
+  @PreAuthorize("hasAuthority('ROLE_PATIENT')")
+  @PostMapping
+  public ResponseEntity<PaymentOrderResponseDTO> addAppointment(
+      @AuthenticationPrincipal User user, @Valid @RequestBody AppointmentRequestDTO dto)
+      throws IOException, ApiException {
+    return ResponseEntity.status(HttpStatus.CREATED).body(service.addAppointment(user, dto));
+  }
 
-    @PreAuthorize("hasAuthority('ROLE_PATIENT')")
-    @GetMapping("/available")
-    public ResponseEntity<List<AvailableSlotDTO>> getAvailableAppointments() {
-        return ResponseEntity.status(HttpStatus.OK).body(service.getAvailableAppointments());
-    }
+  @PreAuthorize("hasAuthority('ROLE_PATIENT')")
+  @GetMapping("/available")
+  public ResponseEntity<List<AvailableSlotDTO>> getAvailableAppointments() {
+    return ResponseEntity.status(HttpStatus.OK).body(service.getAvailableAppointments());
+  }
 
-    @PreAuthorize("hasAuthority('ROLE_PATIENT')")
-    @GetMapping("/user")
-    public ResponseEntity<Page<AppointmentDetailDTO>> listUserAppointments(@AuthenticationPrincipal User user, @PageableDefault(page = 0, size = 24, sort = "startTimeUtc", direction = Sort.Direction.DESC) Pageable pageable){
-        return ResponseEntity.status(HttpStatus.OK).body(service.listUserAppointments(user, pageable));
-    }
+  @PreAuthorize("hasAuthority('ROLE_PATIENT')")
+  @GetMapping("/user")
+  public ResponseEntity<Page<AppointmentDetailDTO>> listUserAppointments(
+      @AuthenticationPrincipal User user,
+      @PageableDefault(page = 0, size = 24, sort = "startTimeUtc", direction = Sort.Direction.DESC)
+          Pageable pageable) {
+    return ResponseEntity.status(HttpStatus.OK).body(service.listUserAppointments(user, pageable));
+  }
 
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    @GetMapping("/admin")
-    public ResponseEntity<Page<AppointmentDetailDTO>> listAdminAppointments(@AuthenticationPrincipal User user, @PageableDefault(page = 0, size = 24, sort = "startTimeUtc", direction = Sort.Direction.DESC) Pageable pageable){
-        return ResponseEntity.status(HttpStatus.OK).body(service.listAdminAppointments(user, pageable));
-    }
+  @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+  @GetMapping("/admin")
+  public ResponseEntity<Page<AppointmentDetailDTO>> listAdminAppointments(
+      @AuthenticationPrincipal User user,
+      @PageableDefault(page = 0, size = 24, sort = "startTimeUtc", direction = Sort.Direction.DESC)
+          Pageable pageable) {
+    return ResponseEntity.status(HttpStatus.OK).body(service.listAdminAppointments(user, pageable));
+  }
 
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_PATIENT')")
-    @GetMapping("/by-id/{id}")
-    public ResponseEntity<AppointmentDetailDTO> getAppointmentById(@AuthenticationPrincipal User user, @PathVariable Long id){
-        return ResponseEntity.status(HttpStatus.OK).body(service.getAppointmentById(user, id));
-    }
+  @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_PATIENT')")
+  @GetMapping("/by-id/{id}")
+  public ResponseEntity<AppointmentDetailDTO> getAppointmentById(
+      @AuthenticationPrincipal User user, @PathVariable Long id) {
+    return ResponseEntity.status(HttpStatus.OK).body(service.getAppointmentById(user, id));
+  }
 
-    @PreAuthorize("hasAuthority('ROLE_PATIENT')")
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteAppointment(@PathVariable Long id, @AuthenticationPrincipal User user){
-        service.deleteAppointment(id, user);
-        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
-    }
+  @PreAuthorize("hasAuthority('ROLE_PATIENT')")
+  @DeleteMapping("/{id}")
+  public ResponseEntity<Void> deleteAppointment(
+      @PathVariable Long id, @AuthenticationPrincipal User user) {
+    service.deleteAppointment(id, user);
+    return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+  }
 
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    @DeleteMapping("/admin/{id}")
-    public ResponseEntity<Void> adminDeleteAppointment(@PathVariable Long id, @RequestParam(defaultValue = "true") boolean refund){
-        service.adminDeleteAppointment(id, refund);
-        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
-    }
+  @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+  @DeleteMapping("/admin/{id}")
+  public ResponseEntity<Void> adminDeleteAppointment(
+      @PathVariable Long id, @RequestParam(defaultValue = "true") boolean refund) {
+    service.adminDeleteAppointment(id, refund);
+    return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+  }
 }
