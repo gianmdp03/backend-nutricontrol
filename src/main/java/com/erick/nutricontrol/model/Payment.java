@@ -2,17 +2,19 @@ package com.erick.nutricontrol.model;
 
 import com.erick.nutricontrol._enum.PaymentStatus;
 import jakarta.persistence.*;
+import java.math.BigDecimal;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.math.BigDecimal;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
-
 @Entity
-@Table(name = "payments")
+@Table(name = "payments", indexes = {
+        @Index(name = "idx_payment_appointment", columnList = "appointment_id"),
+        @Index(name = "idx_payment_status", columnList = "status")
+})
 @Getter
 @Setter
 @NoArgsConstructor

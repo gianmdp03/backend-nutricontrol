@@ -12,7 +12,12 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-@Table(name = "medical_certificates")
+@Table(
+    name = "medical_certificates",
+    indexes = {
+      @Index(name = "idx_certificate_user", columnList = "user_id"),
+      @Index(name = "idx_certificate_date", columnList = "dateTime")
+    })
 public class MedicalCertificate {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)

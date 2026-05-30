@@ -14,7 +14,8 @@ import java.time.LocalTime;
 @Setter
 @Table(
     name = "schedule_rule",
-    uniqueConstraints = {@UniqueConstraint(columnNames = {"dayOfWeek", "startTime", "admin_id"})})
+    uniqueConstraints = {@UniqueConstraint(columnNames = {"dayOfWeek", "startTime", "admin_id"})},
+    indexes = {@Index(name = "idx_schedule_rule_admin", columnList = "admin_id")})
 @NoArgsConstructor
 public class ScheduleRule {
   @Id

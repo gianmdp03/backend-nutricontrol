@@ -13,5 +13,11 @@ public interface PrescriptionService {
 
   Page<PrescriptionDetailDTO> adminGetUserPrescriptions(Long userId, Pageable pageable);
 
+  PrescriptionDetailDTO createManualPrescription(User admin, PrescriptionRequestDTO dto);
+
+  Page<PrescriptionDetailDTO> getManualPrescriptions(Pageable pageable);
+
   byte[] getPDFPrescription(User user, Long id);
+
+  byte[] getManualPDFPrescription(Long id);
 }

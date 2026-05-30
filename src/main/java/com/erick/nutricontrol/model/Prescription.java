@@ -11,7 +11,12 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-@Table(name = "prescriptions")
+@Table(
+    name = "prescriptions",
+    indexes = {
+      @Index(name = "idx_prescription_user", columnList = "user_id"),
+      @Index(name = "idx_prescription_date", columnList = "dateTime")
+    })
 public class Prescription {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)

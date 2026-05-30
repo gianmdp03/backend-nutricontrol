@@ -82,6 +82,34 @@ public class PrescriptionServiceImpl implements PrescriptionService {
   }
 
   @Override
+  @Transactional
+  public PrescriptionDetailDTO createManualPrescription(User admin, PrescriptionRequestDTO dto) {
+    AdminPreset adminPreset = admin.getAdminPreset();
+    Prescription prescription = mapper.toEntity(dto);
+    prescription.setAdminName(adminPreset.getAdminName());
+    prescription.setSpecialty(adminPreset.getSpecialty());
+    prescription.setExequatur(adminPreset.getExequatur());
+    prescription.setUser(null);
+    prescription = repository.save(prescription);
+    String date = convertFromUtcToTimezone(prescription.getDateTime(), "America/Santo_Domingo");
+    return mapper.toDetailDto(prescription, date);
+  }
+
+  @Override
+  public Page<PrescriptionDetailDTO> getManualPrescriptions(Pageable pageable) {
+    Page<Prescription> page = repository.findByUserIsNull(pageable);
+    if (page.isEmpty()) {
+      return Page.empty();
+    }
+    return page.map(
+        prescription -> {
+          String formattedDate =
+              convertFromUtcToTimezone(prescription.getDateTime(), "America/Santo_Domingo");
+          return mapper.toDetailDto(prescription, formattedDate);
+        });
+  }
+
+  @Override
   public byte[] getPDFPrescription(User user, Long id) {
     Prescription prescription =
         repository
@@ -91,6 +119,27 @@ public class PrescriptionServiceImpl implements PrescriptionService {
     String date = convertFromUtcToTimezone(prescription.getDateTime(), userTimezone);
     try {
       return pdfGeneratorService.generatePrescription(
+          prescription.getPatientName(),
+          prescription.getAge(),
+          prescription.getAdminName(),
+          prescription.getSpecialty(),
+          prescription.getExequatur(),
+          prescription.getTextareaTexto(),
+          date);
+    } catch (Exception e) {
+      throw new BadRequestException("Error al generar el PDF");
+    }
+  }
+
+  @Override
+  public byte[] getManualPDFPrescription(Long id) {
+    Prescription prescription =
+        repository
+            .findByIdAndUserIsNull(id)
+            .orElseThrow(() -> new NotFoundException("Prescription not found"));
+    String date = convertFromUtcToTimezone(prescription.getDateTime(), "America/Santo_Domingo");
+    try {
+      return pdfGeneratorService.generateMedicalCertificate(
           prescription.getPatientName(),
           prescription.getAge(),
           prescription.getAdminName(),

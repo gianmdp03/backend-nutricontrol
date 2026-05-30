@@ -86,6 +86,36 @@ public class MedicalCertificateServiceImpl implements MedicalCertificateService 
   }
 
   @Override
+  @Transactional
+  public MedicalCertificateDetailDTO createManualMedicalCertificate(
+      User admin, MedicalCertificateRequestDTO dto) {
+    AdminPreset adminPreset = admin.getAdminPreset();
+    MedicalCertificate medicalCertificate = mapper.toEntity(dto);
+    medicalCertificate.setAdminName(adminPreset.getAdminName());
+    medicalCertificate.setSpecialty(adminPreset.getSpecialty());
+    medicalCertificate.setExequatur(adminPreset.getExequatur());
+    medicalCertificate.setUser(null);
+    medicalCertificate = repository.save(medicalCertificate);
+    String date =
+        convertFromUtcToTimezone(medicalCertificate.getDateTime(), "America/Santo_Domingo");
+    return mapper.toDetailDto(medicalCertificate, date);
+  }
+
+  @Override
+  public Page<MedicalCertificateDetailDTO> getManualMedicalCertificates(Pageable pageable) {
+    Page<MedicalCertificate> page = repository.findByUserIsNull(pageable);
+    if (page.isEmpty()) {
+      return Page.empty();
+    }
+    return page.map(
+        certificate -> {
+          String formattedDate =
+              convertFromUtcToTimezone(certificate.getDateTime(), "America/Santo_Domingo");
+          return mapper.toDetailDto(certificate, formattedDate);
+        });
+  }
+
+  @Override
   public byte[] getPDFMedicalCertificate(User user, Long id) {
     MedicalCertificate medicalCertificate =
         repository
@@ -93,6 +123,28 @@ public class MedicalCertificateServiceImpl implements MedicalCertificateService 
             .orElseThrow(() -> new NotFoundException("MedicalCertificate not found"));
     String userTimezone = user.getTimezone();
     String date = convertFromUtcToTimezone(medicalCertificate.getDateTime(), userTimezone);
+    try {
+      return pdfGeneratorService.generateMedicalCertificate(
+          medicalCertificate.getPatientName(),
+          medicalCertificate.getAge(),
+          medicalCertificate.getAdminName(),
+          medicalCertificate.getSpecialty(),
+          medicalCertificate.getExequatur(),
+          medicalCertificate.getTextareaTexto(),
+          date);
+    } catch (Exception e) {
+      throw new BadRequestException("Error al generar el PDF");
+    }
+  }
+
+  @Override
+  public byte[] getManualPDFMedicalCertificate(Long id) {
+    MedicalCertificate medicalCertificate =
+        repository
+            .findByIdAndUserIsNull(id)
+            .orElseThrow(() -> new NotFoundException("MedicalCertificate not found"));
+    String date =
+        convertFromUtcToTimezone(medicalCertificate.getDateTime(), "America/Santo_Domingo");
     try {
       return pdfGeneratorService.generateMedicalCertificate(
           medicalCertificate.getPatientName(),

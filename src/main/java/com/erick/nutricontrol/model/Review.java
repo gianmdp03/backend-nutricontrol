@@ -2,15 +2,17 @@ package com.erick.nutricontrol.model;
 
 import com.erick.nutricontrol.security.user.model.User;
 import jakarta.persistence.*;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
-
 @Entity
-@Table(name = "reviews")
+@Table(name = "reviews", indexes = {
+        @Index(name = "idx_review_admin", columnList = "admin_id"),
+        @Index(name = "idx_review_user", columnList = "user_id")
+})
 @Getter
 @Setter
 @NoArgsConstructor

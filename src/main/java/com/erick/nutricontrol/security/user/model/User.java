@@ -15,7 +15,12 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 @Entity
-@Table(name = "_user")
+@Table(
+    name = "_user",
+    indexes = {@Index(name = "idx_user_role", columnList = "role")
+      // Si implemento busquedas de nombre y apellido.
+      // @Index(name = "idx_user_name_lastname", columnList = "name, lastname")
+    })
 @Getter
 @Setter
 @NoArgsConstructor

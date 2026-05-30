@@ -2,15 +2,16 @@ package com.erick.nutricontrol.model;
 
 import com.erick.nutricontrol.security.user.model.User;
 import jakarta.persistence.*;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.LocalDate;
-import java.time.LocalTime;
-
 @Entity
-@Table(name = "schedule_exceptions")
+@Table(name = "schedule_exceptions", indexes = {
+        @Index(name = "idx_schedule_exception_admin_date", columnList = "admin_id, date")
+})
 @Getter
 @Setter
 @NoArgsConstructor

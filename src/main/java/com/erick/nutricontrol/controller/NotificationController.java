@@ -6,6 +6,8 @@ import com.erick.nutricontrol.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -16,38 +18,39 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @PreAuthorize("hasAnyAuthority('ROLE_PATIENT', 'ROLE_ADMIN')")
 public class NotificationController {
-    private final NotificationService notificationService;
+  private final NotificationService notificationService;
 
-    @GetMapping("/unread")
-    public ResponseEntity<Page<NotificationDetailDTO>> getUnreadNotifications(
-            @AuthenticationPrincipal User user,
-            Pageable pageable) {
-        return ResponseEntity.ok(notificationService.listUserNotifications(user, pageable));
-    }
+  @GetMapping("/unread")
+  public ResponseEntity<Page<NotificationDetailDTO>> getUnreadNotifications(
+      @AuthenticationPrincipal User user,
+      @PageableDefault(page = 0, size = 24, sort = "createdAt", direction = Sort.Direction.DESC)
+          Pageable pageable) {
+    return ResponseEntity.ok(notificationService.listUserNotifications(user, pageable));
+  }
 
-    @PatchMapping("/{id}/read")
-    public ResponseEntity<Void> markAsRead(@AuthenticationPrincipal User user, @PathVariable Long id) {
-        notificationService.markAsRead(user, id);
-        return ResponseEntity.noContent().build();
-    }
+  @PatchMapping("/{id}/read")
+  public ResponseEntity<Void> markAsRead(
+      @AuthenticationPrincipal User user, @PathVariable Long id) {
+    notificationService.markAsRead(user, id);
+    return ResponseEntity.noContent().build();
+  }
 
-    @PatchMapping("/read-all")
-    public ResponseEntity<Void> markAllAsRead(@AuthenticationPrincipal User user) {
-        notificationService.markAllAsRead(user);
-        return ResponseEntity.noContent().build();
-    }
+  @PatchMapping("/read-all")
+  public ResponseEntity<Void> markAllAsRead(@AuthenticationPrincipal User user) {
+    notificationService.markAllAsRead(user);
+    return ResponseEntity.noContent().build();
+  }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteNotification(
-            @AuthenticationPrincipal User user,
-            @PathVariable Long id) {
-        notificationService.deleteNotification(user, id);
-        return ResponseEntity.noContent().build();
-    }
+  @DeleteMapping("/{id}")
+  public ResponseEntity<Void> deleteNotification(
+      @AuthenticationPrincipal User user, @PathVariable Long id) {
+    notificationService.deleteNotification(user, id);
+    return ResponseEntity.noContent().build();
+  }
 
-    @DeleteMapping("/delete-all")
-    public ResponseEntity<Void> deleteAllNotifications(@AuthenticationPrincipal User user) {
-        notificationService.deleteAllNotifications(user);
-        return ResponseEntity.noContent().build();
-    }
+  @DeleteMapping("/delete-all")
+  public ResponseEntity<Void> deleteAllNotifications(@AuthenticationPrincipal User user) {
+    notificationService.deleteAllNotifications(user);
+    return ResponseEntity.noContent().build();
+  }
 }

@@ -8,6 +8,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -32,7 +34,9 @@ public class PrescriptionController {
   @PreAuthorize("hasAuthority('ROLE_PATIENT')")
   @GetMapping("/user")
   public ResponseEntity<Page<PrescriptionDetailDTO>> getAllUserPrescriptions(
-      @AuthenticationPrincipal User user, Pageable pageable) {
+      @AuthenticationPrincipal User user,
+      @PageableDefault(page = 0, size = 24, sort = "createdAt", direction = Sort.Direction.DESC)
+          Pageable pageable) {
     return ResponseEntity.status(HttpStatus.OK)
         .body(service.getAllUserPrescriptions(user, pageable));
   }
@@ -40,12 +44,30 @@ public class PrescriptionController {
   @PreAuthorize("hasAuthority('ROLE_ADMIN')")
   @GetMapping("/admin/{id}")
   public ResponseEntity<Page<PrescriptionDetailDTO>> adminGetUserPrescriptions(
-      @PathVariable Long userId, Pageable pageable) {
+      @PathVariable Long userId,
+      @PageableDefault(page = 0, size = 24, sort = "createdAt", direction = Sort.Direction.DESC)
+          Pageable pageable) {
     return ResponseEntity.status(HttpStatus.OK)
         .body(service.adminGetUserPrescriptions(userId, pageable));
   }
 
-  @PreAuthorize("hasAuthority('ROLE_PATIENT')")
+  @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+  @PostMapping("/admin/manual")
+  public ResponseEntity<PrescriptionDetailDTO> createManualPrescription(
+      @AuthenticationPrincipal User admin, @Valid @RequestBody PrescriptionRequestDTO dto) {
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(service.createManualPrescription(admin, dto));
+  }
+
+  @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+  @GetMapping("/admin/manual")
+  public ResponseEntity<Page<PrescriptionDetailDTO>> getManualPrescriptions(
+      @PageableDefault(page = 0, size = 18, sort = "dateTime", direction = Sort.Direction.DESC)
+          Pageable pageable) {
+    return ResponseEntity.status(HttpStatus.CREATED).body(service.getManualPrescriptions(pageable));
+  }
+
+  @PreAuthorize("hasAnyAuthority('ROLE_PATIENT', 'ROLE_ADMIN')")
   @GetMapping("/user/{id}")
   public ResponseEntity<byte[]> getPDFPrescription(
       @AuthenticationPrincipal User user, @PathVariable Long id) {
@@ -56,5 +78,17 @@ public class PrescriptionController {
     return ResponseEntity.status(HttpStatus.OK)
         .headers(headers)
         .body(service.getPDFPrescription(user, id));
+  }
+
+  @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+  @GetMapping("/admin/manual/{id}")
+  public ResponseEntity<byte[]> getManualPDFPrescription(@PathVariable Long id) {
+    HttpHeaders headers = new HttpHeaders();
+    headers.setContentType(MediaType.APPLICATION_PDF);
+    headers.setContentDispositionFormData("inline", "receta-" + id + ".pdf");
+    headers.setCacheControl("must-revalidate, post-check=0, pre-check=0");
+    return ResponseEntity.status(HttpStatus.OK)
+        .headers(headers)
+        .body(service.getManualPDFPrescription(id));
   }
 }

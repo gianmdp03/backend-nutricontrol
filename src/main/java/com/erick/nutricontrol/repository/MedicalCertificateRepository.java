@@ -13,5 +13,9 @@ import java.util.Optional;
 public interface MedicalCertificateRepository extends JpaRepository<MedicalCertificate, Long> {
   Page<MedicalCertificate> findByUser(User user, Pageable pageable);
 
+  Page<MedicalCertificate> findByUserIsNull(Pageable pageable);
+
   Optional<MedicalCertificate> findByIdAndUser(Long id, User user);
+
+  Optional<MedicalCertificate> findByIdAndUserIsNull(Long id);
 }
