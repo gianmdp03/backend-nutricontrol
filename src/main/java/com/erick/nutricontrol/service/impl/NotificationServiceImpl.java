@@ -6,11 +6,11 @@ import com.erick.nutricontrol.model.Notification;
 import com.erick.nutricontrol.repository.NotificationRepository;
 import com.erick.nutricontrol.security.user.model.User;
 import com.erick.nutricontrol.service.NotificationService;
+import com.erick.nutricontrol.service.WebSocketSenderService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,7 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class NotificationServiceImpl implements NotificationService {
   private final NotificationRepository repository;
   private final NotificationMapper mapper;
-  private final SimpMessagingTemplate messagingTemplate;
+  private final WebSocketSenderService webSocketSenderService;
 
   @Override
   @Transactional
@@ -29,7 +29,7 @@ public class NotificationServiceImpl implements NotificationService {
     notification.setUser(user);
     Notification saved = repository.save(notification);
     NotificationDetailDTO dto = mapper.toDetailDTO(saved);
-    messagingTemplate.convertAndSendToUser(user.getUsername(), "/queue/notifications", dto);
+    webSocketSenderService.sendNotificationAsync(user.getUsername(), dto);
     log.info("Notificación enviada vía WebSocket al usuario ID: {}", user.getId());
     return dto;
   }

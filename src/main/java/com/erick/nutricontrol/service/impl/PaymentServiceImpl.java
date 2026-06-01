@@ -31,6 +31,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
@@ -222,6 +223,18 @@ public class PaymentServiceImpl implements PaymentService {
   }
 
   @Override
+  @Async
+  public void capturePaymentAsync(String authorizationId, Long appointmentId) {
+    try {
+      capturePayment(authorizationId);
+      log.info("Pago capturado asíncronamente para el turno {}", appointmentId);
+    } catch (Exception e) {
+      log.error(
+          "Fallo al intentar capturar automáticamente el pago del turno ID: {}", appointmentId, e);
+    }
+  }
+
+  @Override
   @Transactional
   public void voidPayment(String authorizationId) throws IOException, ApiException {
     Payment payment =
@@ -347,6 +360,31 @@ public class PaymentServiceImpl implements PaymentService {
 
     } catch (Exception e) {
       throw new Exception("Error comunicándose con el validador de PayPal", e);
+    }
+  }
+
+  @Async
+  public void processRefundOrVoidAsync(
+      String authorizationId, String captureId, boolean isAuthorized) {
+    try {
+      if (isAuthorized && authorizationId != null) {
+        voidPayment(authorizationId);
+      } else if (!isAuthorized && captureId != null) {
+        refundPayment(captureId);
+      }
+    } catch (Exception e) {
+      log.error("Error asíncrono en PayPal al procesar reembolso/anulación", e);
+    }
+  }
+
+  @Async
+  public void forcePenaltyCaptureAsync(String authorizationId) {
+    try {
+      if (authorizationId != null) {
+        capturePayment(authorizationId);
+      }
+    } catch (Exception e) {
+      log.error("Error asíncrono en PayPal al cobrar penalidad", e);
     }
   }
 }

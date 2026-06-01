@@ -2,7 +2,6 @@ package com.erick.nutricontrol.task;
 
 import com.erick.nutricontrol._enum.AppointmentStatus;
 import com.erick.nutricontrol._enum.NotificationType;
-import com.erick.nutricontrol._enum.PaymentStatus;
 import com.erick.nutricontrol.model.Appointment;
 import com.erick.nutricontrol.model.Notification;
 import com.erick.nutricontrol.model.Payment;
@@ -91,15 +90,8 @@ public class AppointmentTasks {
         for (Payment payment : app.getPayments()) {
           if ("AUTHORIZED".equals(payment.getStatus().name())
               && payment.getPaypalAuthorizationId() != null) {
-            try {
-              paymentService.capturePayment(payment.getPaypalAuthorizationId());
-              capturedCount++;
-            } catch (Exception e) {
-              log.error(
-                  "Fallo al intentar capturar automáticamente el pago del turno ID: " + app.getId(),
-                  e);
-              payment.setStatus(PaymentStatus.FAILED);
-            }
+            paymentService.capturePaymentAsync(payment.getPaypalAuthorizationId(), app.getId());
+            capturedCount++;
           }
         }
       }

@@ -308,36 +308,25 @@ public class AppointmentServiceImpl implements AppointmentService {
   }
 
   private void processRefundIfApply(Appointment appointment, boolean adminForcedRefund) {
-    if (!appointment.getPayments().isEmpty()) {
-      for (Payment payment : appointment.getPayments()) {
-        try {
-          String paymentStatus = payment.getStatus().name();
-          if ("AUTHORIZED".equals(paymentStatus) && payment.getPaypalAuthorizationId() != null) {
-            paymentService.voidPayment(payment.getPaypalAuthorizationId());
-          } else if ("CAPTURED".equals(paymentStatus)
-              && payment.getPaypalCaptureId() != null
-              && adminForcedRefund) {
-            paymentService.refundPayment(payment.getPaypalCaptureId());
-          }
-        } catch (Exception e) {
-          throw new BadRequestException(
-              "PayPal error in payment with id: " + payment.getId() + ": " + e.getMessage());
-        }
+    for (Payment payment : appointment.getPayments()) {
+      String status = payment.getStatus().name();
+      boolean isAuthorized = "AUTHORIZED".equals(status);
+      boolean isCaptured = "CAPTURED".equals(status);
+
+      if (isAuthorized || (isCaptured && adminForcedRefund)) {
+        paymentService.processRefundOrVoidAsync(
+                payment.getPaypalAuthorizationId(),
+                payment.getPaypalCaptureId(),
+                isAuthorized
+        );
       }
     }
   }
 
   private void forcePenaltyCapture(Appointment appointment) {
-    if (!appointment.getPayments().isEmpty()) {
-      for (Payment payment : appointment.getPayments()) {
-        try {
-          String paymentStatus = payment.getStatus().name();
-          if ("AUTHORIZED".equals(paymentStatus) && payment.getPaypalAuthorizationId() != null) {
-            paymentService.capturePayment(payment.getPaypalAuthorizationId());
-          }
-        } catch (Exception e) {
-          throw new BadRequestException("PayPal error");
-        }
+    for (Payment payment : appointment.getPayments()) {
+      if ("AUTHORIZED".equals(payment.getStatus().name())) {
+        paymentService.forcePenaltyCaptureAsync(payment.getPaypalAuthorizationId());
       }
     }
   }
