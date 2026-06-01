@@ -174,13 +174,12 @@ public class PaymentServiceImpl implements PaymentService {
     String doctorName = appointment.getAdmin().getName();
 
     emailService.sendAppointmentReceiptAsync(
-            patientEmail,
-            patientName,
-            appointmentDate,
-            appointmentTime,
-            doctorName,
-            appointment.getMeetingLink()
-    );
+        patientEmail,
+        patientName,
+        appointmentDate,
+        appointmentTime,
+        doctorName,
+        appointment.getMeetingLink());
   }
 
   @Override
@@ -272,45 +271,63 @@ public class PaymentServiceImpl implements PaymentService {
   }
 
   @Override
+  @Async
   @Transactional
   public void processWebhook(PayPalWebhookDTO payload) {
-    String eventType = payload.event_type();
-    String appointmentIdStr = payload.resource().custom_id();
+    try {
+      log.info(
+          "Procesando webhook de PayPal en background para el evento: {}", payload.event_type());
 
-    if (appointmentIdStr == null) return;
+      String eventType = payload.event_type();
+      String appointmentIdStr = payload.resource().custom_id();
 
-    Long appointmentId = Long.parseLong(appointmentIdStr);
-    Appointment appointment = appointmentRepository.findById(appointmentId).orElse(null);
-    if (appointment == null) return;
+      if (appointmentIdStr == null) {
+        log.warn("El webhook no contiene custom_id. Se ignora.");
+        return;
+      }
 
-    if ("PAYMENT.AUTHORIZATION.CREATED".equals(eventType)) {
-      appointment.getPayments().stream()
-          .filter(p -> p.getStatus() == PaymentStatus.PENDING)
-          .findFirst()
-          .ifPresent(
-              p -> {
-                p.setPaypalAuthorizationId(payload.resource().id());
-                p.setStatus(PaymentStatus.AUTHORIZED);
-                repository.save(p);
-              });
+      Long appointmentId = Long.parseLong(appointmentIdStr);
+      Appointment appointment = appointmentRepository.findById(appointmentId).orElse(null);
+      if (appointment == null) {
+        log.warn("Turno no encontrado para el custom_id: {}", appointmentId);
+        return;
+      }
 
-      appointment.setAppointmentStatus(AppointmentStatus.CONFIRMED);
-      appointmentRepository.save(appointment);
-    } else if ("PAYMENT.CAPTURE.COMPLETED".equals(eventType)) {
-      appointment.getPayments().stream()
-          .filter(
-              p ->
-                  p.getStatus() == PaymentStatus.AUTHORIZED
-                      || p.getStatus() == PaymentStatus.PENDING)
-          .findFirst()
-          .ifPresent(
-              p -> {
-                p.setPaypalCaptureId(payload.resource().id());
-                p.setStatus(PaymentStatus.CAPTURED);
-                repository.save(p);
-              });
+      if ("PAYMENT.AUTHORIZATION.CREATED".equals(eventType)) {
+        appointment.getPayments().stream()
+            .filter(p -> p.getStatus() == PaymentStatus.PENDING)
+            .findFirst()
+            .ifPresent(
+                p -> {
+                  p.setPaypalAuthorizationId(payload.resource().id());
+                  p.setStatus(PaymentStatus.AUTHORIZED);
+                  repository.save(p);
+                  log.info("Pago autorizado (Webhook) para el turno: {}", appointmentId);
+                });
 
-      appointmentRepository.save(appointment);
+        appointment.setAppointmentStatus(AppointmentStatus.CONFIRMED);
+        appointmentRepository.save(appointment);
+
+      } else if ("PAYMENT.CAPTURE.COMPLETED".equals(eventType)) {
+        appointment.getPayments().stream()
+            .filter(
+                p ->
+                    p.getStatus() == PaymentStatus.AUTHORIZED
+                        || p.getStatus() == PaymentStatus.PENDING)
+            .findFirst()
+            .ifPresent(
+                p -> {
+                  p.setPaypalCaptureId(payload.resource().id());
+                  p.setStatus(PaymentStatus.CAPTURED);
+                  repository.save(p);
+                  log.info("Pago capturado (Webhook) para el turno: {}", appointmentId);
+                });
+
+        appointmentRepository.save(appointment);
+      }
+
+    } catch (Exception e) {
+      log.error("Fallo inesperado al procesar el webhook de PayPal en background", e);
     }
   }
 
