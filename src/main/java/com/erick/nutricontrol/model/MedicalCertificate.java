@@ -45,7 +45,7 @@ public class MedicalCertificate {
   private OffsetDateTime dateTime = OffsetDateTime.now(ZoneOffset.UTC);
 
   @ManyToOne
-  @JoinColumn(name = "user_id", nullable = false)
+  @JoinColumn(name = "user_id")
   private User user;
 
   public MedicalCertificate(String patientName, String age, String textareaTexto, User user) {

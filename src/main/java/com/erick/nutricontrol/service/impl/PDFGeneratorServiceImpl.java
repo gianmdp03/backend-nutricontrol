@@ -1,8 +1,13 @@
 package com.erick.nutricontrol.service.impl;
 
+import com.erick.nutricontrol.extra.DailyMenu;
 import com.erick.nutricontrol.service.PDFGeneratorService;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.time.DayOfWeek;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -35,9 +40,18 @@ public class PDFGeneratorServiceImpl implements PDFGeneratorService {
     ITextRenderer renderer = new ITextRenderer();
 
     ClassPathResource fontResource = new ClassPathResource("fonts/Roboto-Regular.ttf");
+
+    File tempFontFile = File.createTempFile("Roboto-Regular", ".ttf");
+    tempFontFile.deleteOnExit();
+
+    try (InputStream is = fontResource.getInputStream();
+        FileOutputStream os = new FileOutputStream(tempFontFile)) {
+      is.transferTo(os);
+    }
+
     renderer
         .getFontResolver()
-        .addFont(fontResource.getURL().toString(), BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
+        .addFont(tempFontFile.getAbsolutePath(), BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
 
     renderer.setDocumentFromString(htmlContent);
     renderer.layout();
@@ -114,5 +128,51 @@ public class PDFGeneratorServiceImpl implements PDFGeneratorService {
         return baos.toByteArray();
       }
     }
+  }
+
+  @Override
+  public byte[] generateNutritionalPlan(
+      String patientName,
+      String age,
+      String adminName,
+      String adminSpecialty,
+      Map<DayOfWeek, DailyMenu> weeklyMenu,
+      String date,
+      String textareaTexto)
+      throws Exception {
+
+    Context context = new Context();
+    context.setVariable("patientName", patientName);
+    context.setVariable("patientAge", age);
+    context.setVariable("adminName", adminName);
+    context.setVariable("adminSpecialty", adminSpecialty);
+    context.setVariable("date", date);
+    context.setVariable("textareaTexto", textareaTexto);
+    context.setVariable("plan", weeklyMenu);
+
+    String htmlContent = templateEngine.process("nutritionalTemplate", context);
+
+    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+    ITextRenderer renderer = new ITextRenderer();
+
+    ClassPathResource fontResource = new ClassPathResource("fonts/Roboto-Regular.ttf");
+
+    File tempFontFile = File.createTempFile("Roboto-Regular", ".ttf");
+    tempFontFile.deleteOnExit();
+
+    try (InputStream is = fontResource.getInputStream();
+        FileOutputStream os = new FileOutputStream(tempFontFile)) {
+      is.transferTo(os);
+    }
+
+    renderer
+        .getFontResolver()
+        .addFont(tempFontFile.getAbsolutePath(), BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
+
+    renderer.setDocumentFromString(htmlContent);
+    renderer.layout();
+    renderer.createPDF(outputStream);
+
+    return outputStream.toByteArray();
   }
 }

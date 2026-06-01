@@ -75,7 +75,7 @@ public class MedicalCertificateController {
       @AuthenticationPrincipal User user, @PathVariable Long id) {
     HttpHeaders headers = new HttpHeaders();
     headers.setContentType(MediaType.APPLICATION_PDF);
-    headers.setContentDispositionFormData("inline", "receta-" + id + ".pdf");
+    headers.setContentDispositionFormData("inline", "certificado-" + id + ".pdf");
     headers.setCacheControl("must-revalidate, post-check=0, pre-check=0");
     return ResponseEntity.status(HttpStatus.OK)
         .headers(headers)
@@ -87,7 +87,7 @@ public class MedicalCertificateController {
   public ResponseEntity<byte[]> getManualPDFMedicalCertificate(@PathVariable Long id) {
     HttpHeaders headers = new HttpHeaders();
     headers.setContentType(MediaType.APPLICATION_PDF);
-    headers.setContentDispositionFormData("inline", "receta-" + id + ".pdf");
+    headers.setContentDispositionFormData("inline", "certificado-" + id + ".pdf");
     headers.setCacheControl("must-revalidate, post-check=0, pre-check=0");
     return ResponseEntity.status(HttpStatus.OK)
         .headers(headers)

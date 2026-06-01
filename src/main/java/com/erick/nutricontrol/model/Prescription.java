@@ -44,7 +44,7 @@ public class Prescription {
   private OffsetDateTime dateTime = OffsetDateTime.now(ZoneOffset.UTC);
 
   @ManyToOne
-  @JoinColumn(name = "user_id", nullable = false)
+  @JoinColumn(name = "user_id")
   private User user;
 
   public Prescription(String patientName, String age, String textareaTexto, User user) {
