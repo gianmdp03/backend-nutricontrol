@@ -1,272 +1,279 @@
-<!doctype html>
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
-  <head>
-    <meta charset="UTF-8" />
+<head>
+    <meta charset="UTF-8"/>
     <title>Plan Nutricional</title>
     <style type="text/css">
-      body {
-        font-family:
-          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
-          Arial, sans-serif;
-        color: #1f2937;
-        margin: 0;
-        padding: 30px;
-        background-color: #ffffff;
-      }
+        @page {
+            size: A4 landscape;
+            margin: 10mm;
+        }
 
-      .header {
-        text-align: center;
-        margin-bottom: 30px;
-      }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+            Arial, sans-serif;
+            color: #1f2937;
+            margin: 0;
+            padding: 30px;
+            background-color: #ffffff;
+        }
 
-      .header h1 {
-        font-size: 24px;
-        color: #111827;
-        margin: 0 0 5px 0;
-        letter-spacing: -0.5px;
-      }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
 
-      .fecha-generacion {
-        font-size: 12px;
-        color: #9ca3af;
-        margin: 0 0 20px 0;
-      }
+        .header h1 {
+            font-size: 24px;
+            color: #111827;
+            margin: 0 0 5px 0;
+            letter-spacing: -0.5px;
+        }
 
-      table.grilla-dieta {
-        width: 100%;
-        border-collapse: collapse;
-        table-layout: fixed;
-        margin-top: 10px;
-      }
+        .fecha-generacion {
+            font-size: 12px;
+            color: #9ca3af;
+            margin: 0 0 20px 0;
+        }
 
-      tr {
-        page-break-inside: avoid;
-      }
+        table.grilla-dieta {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+            margin-top: 10px;
 
-      table.grilla-dieta th,
-      table.grilla-dieta td {
-        border: 1px solid #d1d5db;
-        padding: 14px 10px;
-        text-align: center;
-        word-wrap: break-word;
-        overflow-wrap: break-word;
-        vertical-align: middle;
-      }
+            -fs-table-paginate: paginate;
+        }
 
-      table.grilla-dieta th {
-        background-color: #1f2937;
-        color: #f9fafb;
-        font-weight: 600;
-        font-size: 16px;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        padding: 16px 10px;
-      }
+        tr {
+            page-break-inside: avoid;
+        }
 
-      .comida-label {
-        background-color: #f3f4f6;
-        font-size: 13px;
-        font-weight: 600;
-        color: #374151;
-        text-transform: uppercase;
-      }
+        table.grilla-dieta th,
+        table.grilla-dieta td {
+            border: 1px solid #d1d5db;
+            padding: 14px 10px;
+            text-align: center;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            vertical-align: middle;
+        }
 
-      table.grilla-dieta tbody tr:nth-child(even) td:not(.comida-label) {
-        background-color: #f9fafb;
-      }
+        table.grilla-dieta th {
+            background-color: #1f2937;
+            color: #f9fafb;
+            font-weight: 600;
+            font-size: 16px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 16px 10px;
+        }
 
-      table.grilla-dieta tbody tr:nth-child(odd) td:not(.comida-label) {
-        background-color: #ffffff;
-      }
+        .comida-label {
+            background-color: #f3f4f6;
+            font-size: 13px;
+            font-weight: 600;
+            color: #374151;
+            text-transform: uppercase;
+        }
 
-      .fase-col {
-        width: 9%;
-      }
-      .dia-col {
-        width: 13%;
-      }
+        table.grilla-dieta tbody tr:nth-child(even) td:not(.comida-label) {
+            background-color: #f9fafb;
+        }
 
-      .contenido-dieta {
-        font-size: 13px;
-        line-height: 1.5;
-        text-align: left;
-      }
+        table.grilla-dieta tbody tr:nth-child(odd) td:not(.comida-label) {
+            background-color: #ffffff;
+        }
 
-      .seccion-notas {
-        margin-top: 30px;
-        border: 1px solid #d1d5db;
-        background-color: #f9fafb;
-        padding: 20px;
-        page-break-inside: avoid;
-      }
-      .seccion-notas h3 {
-        margin: 0 0 10px 0;
-        font-size: 14px;
-        color: #111827;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        border-bottom: 1px solid #d1d5db;
-        padding-bottom: 8px;
-      }
+        .fase-col {
+            width: 9%;
+        }
 
-      .contenido-notas {
-        font-size: 13.5px;
-        line-height: 1.6;
-        color: #374151;
-        margin: 0;
-        white-space: pre-wrap;
-      }
+        .dia-col {
+            width: 13%;
+        }
+
+        .contenido-dieta {
+            font-size: 13px;
+            line-height: 1.5;
+            text-align: left;
+        }
+
+        .seccion-notas {
+            margin-top: 30px;
+            border: 1px solid #d1d5db;
+            background-color: #f9fafb;
+            padding: 20px;
+            page-break-inside: avoid;
+        }
+
+        .seccion-notas h3 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            color: #111827;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid #d1d5db;
+            padding-bottom: 8px;
+        }
+
+        .contenido-notas {
+            font-size: 13.5px;
+            line-height: 1.6;
+            color: #374151;
+            margin: 0;
+            white-space: pre-wrap;
+        }
     </style>
-  </head>
-  <body>
-    <div class="header">
-      <h1>Plan Nutricional</h1>
+</head>
+<body>
+<div class="header">
+    <h1>Plan Nutricional</h1>
 
-      <p class="fecha-generacion">
+    <p class="fecha-generacion">
         Generado el <span th:text="${date}">01/06/2026 15:36</span>
-      </p>
+    </p>
 
-      <table style="width: 100%; border: none; margin-top: 10px">
+    <table style="width: 100%; border: none; margin-top: 10px">
         <tr>
-          <td
-            style="
+            <td
+                    style="
               border: none;
               padding: 0;
               text-align: left;
               vertical-align: top;
             "
-          >
+            >
             <span style="font-size: 14px; color: #6b7280">Paciente: </span
-            ><br />
-            <strong
-              style="font-size: 15px; color: #111827"
-              th:text="${patientName}"
-              >Gianluca</strong
-            ><br />
-            <span style="font-size: 13px; color: #6b7280">
+            ><br/>
+                <strong
+                        style="font-size: 15px; color: #111827"
+                        th:text="${patientName}"
+                >Gianluca</strong
+                ><br/>
+                <span style="font-size: 13px; color: #6b7280">
               Edad: <span th:text="${patientAge}">28</span> años
             </span>
-          </td>
+            </td>
 
-          <td
-            style="
+            <td
+                    style="
               border: none;
               padding: 0;
               text-align: right;
               vertical-align: top;
             "
-          >
-            <strong
-              style="font-size: 15px; color: #111827"
-              th:text="${adminName}"
-              >Dra. Nombre Apellido</strong
-            ><br />
-            <span
-              style="font-size: 13px; color: #6b7280"
-              th:text="${adminSpecialty}"
-              >Especialidad / Matrícula</span
             >
-          </td>
+                <strong
+                        style="font-size: 15px; color: #111827"
+                        th:text="${adminName}"
+                >Dra. Nombre Apellido</strong
+                ><br/>
+                <span
+                        style="font-size: 13px; color: #6b7280"
+                        th:text="${adminSpecialty}"
+                >Especialidad / Matrícula</span
+                >
+            </td>
         </tr>
-      </table>
-    </div>
-
-    <table class="grilla-dieta">
-      <thead>
-        <tr>
-          <th class="fase-col">Turno</th>
-          <th class="dia-col">Lunes</th>
-          <th class="dia-col">Martes</th>
-          <th class="dia-col">Miércoles</th>
-          <th class="dia-col">Jueves</th>
-          <th class="dia-col">Viernes</th>
-          <th class="dia-col">Sábado</th>
-          <th class="dia-col">Domingo</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td class="comida-label">Desayuno</td>
-          <td class="contenido-dieta" th:text="${plan.MONDAY.breakfast}">
-            Detalle
-          </td>
-          <td class="contenido-dieta" th:text="${plan.TUESDAY.breakfast}">
-            Detalle
-          </td>
-          <td class="contenido-dieta" th:text="${plan.WEDNESDAY.breakfast}">
-            Detalle
-          </td>
-          <td class="contenido-dieta" th:text="${plan.THURSDAY.breakfast}">
-            Detalle
-          </td>
-          <td class="contenido-dieta" th:text="${plan.FRIDAY.breakfast}">
-            Detalle
-          </td>
-          <td class="contenido-dieta" th:text="${plan.SATURDAY.breakfast}">
-            Detalle
-          </td>
-          <td class="contenido-dieta" th:text="${plan.SUNDAY.breakfast}">
-            Detalle
-          </td>
-        </tr>
-        <tr>
-          <td class="comida-label">Almuerzo</td>
-          <td class="contenido-dieta" th:text="${plan.MONDAY.lunch}">
-            Detalle
-          </td>
-          <td class="contenido-dieta" th:text="${plan.TUESDAY.lunch}">
-            Detalle
-          </td>
-          <td class="contenido-dieta" th:text="${plan.WEDNESDAY.lunch}">
-            Detalle
-          </td>
-          <td class="contenido-dieta" th:text="${plan.THURSDAY.lunch}">
-            Detalle
-          </td>
-          <td class="contenido-dieta" th:text="${plan.FRIDAY.lunch}">
-            Detalle
-          </td>
-          <td class="contenido-dieta" th:text="${plan.SATURDAY.lunch}">
-            Detalle
-          </td>
-          <td class="contenido-dieta" th:text="${plan.SUNDAY.lunch}">
-            Detalle
-          </td>
-        </tr>
-        <tr>
-          <td class="comida-label">Cena</td>
-          <td class="contenido-dieta" th:text="${plan.MONDAY.dinner}">
-            Detalle
-          </td>
-          <td class="contenido-dieta" th:text="${plan.TUESDAY.dinner}">
-            Detalle
-          </td>
-          <td class="contenido-dieta" th:text="${plan.WEDNESDAY.dinner}">
-            Detalle
-          </td>
-          <td class="contenido-dieta" th:text="${plan.THURSDAY.dinner}">
-            Detalle
-          </td>
-          <td class="contenido-dieta" th:text="${plan.FRIDAY.dinner}">
-            Detalle
-          </td>
-          <td class="contenido-dieta" th:text="${plan.SATURDAY.dinner}">
-            Detalle
-          </td>
-          <td class="contenido-dieta" th:text="${plan.SUNDAY.dinner}">
-            Detalle
-          </td>
-        </tr>
-      </tbody>
     </table>
+</div>
 
-    <div class="seccion-notas">
-      <h3>Notas e Indicaciones</h3>
-      <p class="contenido-notas" th:text="${textareaTexto}">
+<table class="grilla-dieta">
+    <thead>
+    <tr>
+        <th class="fase-col">Turno</th>
+        <th class="dia-col">Lunes</th>
+        <th class="dia-col">Martes</th>
+        <th class="dia-col">Miércoles</th>
+        <th class="dia-col">Jueves</th>
+        <th class="dia-col">Viernes</th>
+        <th class="dia-col">Sábado</th>
+        <th class="dia-col">Domingo</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+        <td class="comida-label">Desayuno</td>
+        <td class="contenido-dieta" th:text="${plan[T(java.time.DayOfWeek).MONDAY].breakfast}">
+            Detalle
+        </td>
+        <td class="contenido-dieta" th:text="${plan[T(java.time.DayOfWeek).TUESDAY].breakfast}">
+            Detalle
+        </td>
+        <td class="contenido-dieta" th:text="${plan[T(java.time.DayOfWeek).WEDNESDAY].breakfast}">
+            Detalle
+        </td>
+        <td class="contenido-dieta" th:text="${plan[T(java.time.DayOfWeek).THURSDAY].breakfast}">
+            Detalle
+        </td>
+        <td class="contenido-dieta" th:text="${plan[T(java.time.DayOfWeek).FRIDAY].breakfast}">
+            Detalle
+        </td>
+        <td class="contenido-dieta" th:text="${plan[T(java.time.DayOfWeek).SATURDAY].breakfast}">
+            Detalle
+        </td>
+        <td class="contenido-dieta" th:text="${plan[T(java.time.DayOfWeek).SUNDAY].breakfast}">
+            Detalle
+        </td>
+    </tr>
+    <tr>
+        <td class="comida-label">Almuerzo</td>
+        <td class="contenido-dieta" th:text="${plan[T(java.time.DayOfWeek).MONDAY].lunch}">
+            Detalle
+        </td>
+        <td class="contenido-dieta" th:text="${plan[T(java.time.DayOfWeek).TUESDAY].lunch}">
+            Detalle
+        </td>
+        <td class="contenido-dieta" th:text="${plan[T(java.time.DayOfWeek).WEDNESDAY].lunch}">
+            Detalle
+        </td>
+        <td class="contenido-dieta" th:text="${plan[T(java.time.DayOfWeek).THURSDAY].lunch}">
+            Detalle
+        </td>
+        <td class="contenido-dieta" th:text="${plan[T(java.time.DayOfWeek).FRIDAY].lunch}">
+            Detalle
+        </td>
+        <td class="contenido-dieta" th:text="${plan[T(java.time.DayOfWeek).SATURDAY].lunch}">
+            Detalle
+        </td>
+        <td class="contenido-dieta" th:text="${plan[T(java.time.DayOfWeek).SUNDAY].lunch}">
+            Detalle
+        </td>
+    </tr>
+    <tr>
+        <td class="comida-label">Cena</td>
+        <td class="contenido-dieta" th:text="${plan[T(java.time.DayOfWeek).MONDAY].dinner}">
+            Detalle
+        </td>
+        <td class="contenido-dieta" th:text="${plan[T(java.time.DayOfWeek).TUESDAY].dinner}">
+            Detalle
+        </td>
+        <td class="contenido-dieta" th:text="${plan[T(java.time.DayOfWeek).WEDNESDAY].dinner}">
+            Detalle
+        </td>
+        <td class="contenido-dieta" th:text="${plan[T(java.time.DayOfWeek).THURSDAY].dinner}">
+            Detalle
+        </td>
+        <td class="contenido-dieta" th:text="${plan[T(java.time.DayOfWeek).FRIDAY].dinner}">
+            Detalle
+        </td>
+        <td class="contenido-dieta" th:text="${plan[T(java.time.DayOfWeek).SATURDAY].dinner}">
+            Detalle
+        </td>
+        <td class="contenido-dieta" th:text="${plan[T(java.time.DayOfWeek).SUNDAY].dinner}">
+            Detalle
+        </td>
+    </tr>
+    </tbody>
+</table>
+
+<div class="seccion-notas">
+    <h3>Notas e Indicaciones</h3>
+    <p class="contenido-notas" th:text="${textareaTexto}">
         En esta sección aparecerán todas las indicaciones adicionales que la
         profesional considere necesarias. Por ejemplo: pautas de hidratación,
         reemplazos permitidos, o recomendaciones de actividad física.
-      </p>
-    </div>
-  </body>
+    </p>
+</div>
+</body>
 </html>
