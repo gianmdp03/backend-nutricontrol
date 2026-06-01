@@ -257,14 +257,15 @@ public class AppointmentServiceImpl implements AppointmentService {
 
   @Override
   public AppointmentDetailDTO getAppointmentById(User user, Long id) {
-    Appointment appointment = repository.findById(id).orElseThrow(() -> new NotFoundException("Appointment not found"));
-    if(user.getRole().equals(Role.ROLE_ADMIN)){
-      if(appointment.getAdmin() != user){
+    Appointment appointment =
+        repository.findById(id).orElseThrow(() -> new NotFoundException("Appointment not found"));
+    if (user.getRole().equals(Role.ROLE_ADMIN)) {
+      if (appointment.getAdmin() != user) {
         throw new BadRequestException("Bad Request");
       }
     }
-    if(user.getRole().equals(Role.ROLE_PATIENT)){
-      if(appointment.getUser() != user){
+    if (user.getRole().equals(Role.ROLE_PATIENT)) {
+      if (appointment.getUser() != user) {
         throw new BadRequestException("Bad Request");
       }
     }
@@ -315,10 +316,7 @@ public class AppointmentServiceImpl implements AppointmentService {
 
       if (isAuthorized || (isCaptured && adminForcedRefund)) {
         paymentService.processRefundOrVoidAsync(
-                payment.getPaypalAuthorizationId(),
-                payment.getPaypalCaptureId(),
-                isAuthorized
-        );
+            payment.getPaypalAuthorizationId(), payment.getPaypalCaptureId(), isAuthorized);
       }
     }
   }

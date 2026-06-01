@@ -35,4 +35,5 @@ public interface PaymentService {
   void processRefundOrVoidAsync(String authorizationId, String captureId, boolean isAuthorized);
 
   void forcePenaltyCaptureAsync(String authorizationId);
+
 }

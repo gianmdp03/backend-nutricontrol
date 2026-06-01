@@ -10,4 +10,7 @@ public interface EmailService {
 
   void sendHtmlTemplateEmail(
       String to, String subject, String templateName, Map<String, Object> variables);
+
+  void sendAppointmentReceiptAsync(
+      String to, String patientName, String date, String time, String doctorName, String meetLink);
 }

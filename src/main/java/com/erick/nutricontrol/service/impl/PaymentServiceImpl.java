@@ -173,29 +173,14 @@ public class PaymentServiceImpl implements PaymentService {
     String appointmentTime = appointment.getStartTime().toString();
     String doctorName = appointment.getAdmin().getName();
 
-    try {
-      byte[] pdfBytes =
-          pdfGeneratorService.generateAppointmentReceipt(
-              patientName, appointmentDate, appointmentTime, doctorName);
-      String subject = "NutriControl - Comprobante de reserva de turno";
-      String body =
-          "Hola "
-              + patientName
-              + ",\n\nAdjuntamos el comprobante de tu turno confirmado.\n¡Te esperamos!";
-
-      if (meetLink != null) {
-        body +=
-            "\nPara ingresar a la videollamada el día del turno, utiliza el siguiente enlace: "
-                + meetLink
-                + "\n";
-      }
-
-      body += "\n¡Te esperamos!";
-
-      emailService.sendEmailWithReceipt(patientEmail, subject, body, pdfBytes);
-    } catch (Exception e) {
-      log.error("Voucher failed", e);
-    }
+    emailService.sendAppointmentReceiptAsync(
+            patientEmail,
+            patientName,
+            appointmentDate,
+            appointmentTime,
+            doctorName,
+            appointment.getMeetingLink()
+    );
   }
 
   @Override
@@ -223,6 +208,7 @@ public class PaymentServiceImpl implements PaymentService {
   }
 
   @Override
+  @Transactional
   @Async
   public void capturePaymentAsync(String authorizationId, Long appointmentId) {
     try {
@@ -231,6 +217,15 @@ public class PaymentServiceImpl implements PaymentService {
     } catch (Exception e) {
       log.error(
           "Fallo al intentar capturar automáticamente el pago del turno ID: {}", appointmentId, e);
+
+      repository
+          .findByPaypalAuthorizationId(authorizationId)
+          .ifPresent(
+              payment -> {
+                payment.setStatus(PaymentStatus.FAILED);
+                repository.save(payment);
+                log.info("Estado del pago actualizado a FAILED para el turno {}", appointmentId);
+              });
     }
   }
 
@@ -363,7 +358,9 @@ public class PaymentServiceImpl implements PaymentService {
     }
   }
 
+  @Override
   @Async
+  @Transactional
   public void processRefundOrVoidAsync(
       String authorizationId, String captureId, boolean isAuthorized) {
     try {
@@ -377,7 +374,9 @@ public class PaymentServiceImpl implements PaymentService {
     }
   }
 
+  @Override
   @Async
+  @Transactional
   public void forcePenaltyCaptureAsync(String authorizationId) {
     try {
       if (authorizationId != null) {
