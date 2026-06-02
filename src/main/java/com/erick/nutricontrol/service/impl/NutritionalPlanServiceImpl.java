@@ -87,17 +87,13 @@ public class NutritionalPlanServiceImpl implements NutritionalPlanService {
   @Transactional
   public NutritionalPlanDetailDTO createManualNutritionalPlan(
       User admin, NutritionalPlanRequestDTO dto) {
-    User user =
-        userRepository
-            .findById(dto.userId())
-            .orElseThrow(() -> new NotFoundException("User not found"));
     AdminPreset adminPreset = admin.getAdminPreset();
     NutritionalPlan nutritionalPlan = mapper.toEntity(dto);
     nutritionalPlan.setUser(null);
     nutritionalPlan.setAdminName(adminPreset.getAdminName());
     nutritionalPlan.setAdminSpecialty(adminPreset.getSpecialty());
     nutritionalPlan = repository.save(nutritionalPlan);
-    String date = convertFromUtcToTimezone(nutritionalPlan.getDateTime(), user.getTimezone());
+    String date = convertFromUtcToTimezone(nutritionalPlan.getDateTime(), "America/Santo_Domingo");
     return mapper.toDetailDto(nutritionalPlan, date);
   }
 

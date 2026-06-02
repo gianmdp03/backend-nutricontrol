@@ -11,7 +11,5 @@ public record NutritionalPlanRequestDTO(
     @NotBlank @Size(max = 100) String patientName,
     @NotBlank @Size(max = 3) String age,
     @NotEmpty @Size(min = 7, max = 7) Map<DayOfWeek, DailyMenu> weeklyMenu,
-    @NotBlank @Size(max = 100) String adminName,
-    @NotBlank @Size(max = 100) String adminSpecialty,
     @NotBlank @Size(max = 2000) String textareaTexto,
     Long userId) {}
