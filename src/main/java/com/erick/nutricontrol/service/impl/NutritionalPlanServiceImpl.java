@@ -4,6 +4,7 @@ import com.erick.nutricontrol.dto.nutritionalPlan.NutritionalPlanDetailDTO;
 import com.erick.nutricontrol.dto.nutritionalPlan.NutritionalPlanRequestDTO;
 import com.erick.nutricontrol.exception.BadRequestException;
 import com.erick.nutricontrol.exception.NotFoundException;
+import com.erick.nutricontrol.extra.DatetimeConverter;
 import com.erick.nutricontrol.mapper.NutritionalPlanMapper;
 import com.erick.nutricontrol.model.AdminPreset;
 import com.erick.nutricontrol.model.NutritionalPlan;
@@ -12,10 +13,6 @@ import com.erick.nutricontrol.security.user.model.User;
 import com.erick.nutricontrol.security.user.repository.UserRepository;
 import com.erick.nutricontrol.service.NutritionalPlanService;
 import com.erick.nutricontrol.service.PDFGeneratorService;
-import java.time.OffsetDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -30,8 +27,6 @@ public class NutritionalPlanServiceImpl implements NutritionalPlanService {
   private final NutritionalPlanMapper mapper;
   private final UserRepository userRepository;
   private final PDFGeneratorService pdfGeneratorService;
-  private static final DateTimeFormatter FORMATTER =
-      DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
 
   @Override
   @Transactional
@@ -46,7 +41,9 @@ public class NutritionalPlanServiceImpl implements NutritionalPlanService {
     nutritionalPlan.setAdminName(adminPreset.getAdminName());
     nutritionalPlan.setAdminSpecialty(adminPreset.getSpecialty());
     nutritionalPlan = repository.save(nutritionalPlan);
-    String date = convertFromUtcToTimezone(nutritionalPlan.getDateTime(), user.getTimezone());
+    String date =
+        DatetimeConverter.convertFromUtcToTimezone(
+            nutritionalPlan.getDateTime(), user.getTimezone());
     return mapper.toDetailDto(nutritionalPlan, date);
   }
 
@@ -60,7 +57,8 @@ public class NutritionalPlanServiceImpl implements NutritionalPlanService {
     return page.map(
         nutritionalPlan -> {
           String formattedDate =
-              convertFromUtcToTimezone(nutritionalPlan.getDateTime(), userTimezone);
+              DatetimeConverter.convertFromUtcToTimezone(
+                  nutritionalPlan.getDateTime(), userTimezone);
           return mapper.toDetailDto(nutritionalPlan, formattedDate);
         });
   }
@@ -78,7 +76,8 @@ public class NutritionalPlanServiceImpl implements NutritionalPlanService {
     return page.map(
         nutritionalPlan -> {
           String formattedDate =
-              convertFromUtcToTimezone(nutritionalPlan.getDateTime(), userTimezone);
+              DatetimeConverter.convertFromUtcToTimezone(
+                  nutritionalPlan.getDateTime(), userTimezone);
           return mapper.toDetailDto(nutritionalPlan, formattedDate);
         });
   }
@@ -93,7 +92,9 @@ public class NutritionalPlanServiceImpl implements NutritionalPlanService {
     nutritionalPlan.setAdminName(adminPreset.getAdminName());
     nutritionalPlan.setAdminSpecialty(adminPreset.getSpecialty());
     nutritionalPlan = repository.save(nutritionalPlan);
-    String date = convertFromUtcToTimezone(nutritionalPlan.getDateTime(), "America/Santo_Domingo");
+    String date =
+        DatetimeConverter.convertFromUtcToTimezone(
+            nutritionalPlan.getDateTime(), "America/Santo_Domingo");
     return mapper.toDetailDto(nutritionalPlan, date);
   }
 
@@ -106,7 +107,8 @@ public class NutritionalPlanServiceImpl implements NutritionalPlanService {
     return page.map(
         nutritionalPlan -> {
           String formattedDate =
-              convertFromUtcToTimezone(nutritionalPlan.getDateTime(), "America/Santo_Domingo");
+              DatetimeConverter.convertFromUtcToTimezone(
+                  nutritionalPlan.getDateTime(), "America/Santo_Domingo");
           return mapper.toDetailDto(nutritionalPlan, formattedDate);
         });
   }
@@ -118,7 +120,8 @@ public class NutritionalPlanServiceImpl implements NutritionalPlanService {
             .findByIdAndUser(id, user)
             .orElseThrow(() -> new NotFoundException("NutritionalPlan not found"));
     String userTimezone = user.getTimezone();
-    String date = convertFromUtcToTimezone(nutritionalPlan.getDateTime(), userTimezone);
+    String date =
+        DatetimeConverter.convertFromUtcToTimezone(nutritionalPlan.getDateTime(), userTimezone);
     try {
       return pdfGeneratorService.generateNutritionalPlan(
           nutritionalPlan.getPatientName(),
@@ -139,7 +142,9 @@ public class NutritionalPlanServiceImpl implements NutritionalPlanService {
         repository
             .findByIdAndUserIsNull(id)
             .orElseThrow(() -> new NotFoundException("NutritionalPlan not found"));
-    String date = convertFromUtcToTimezone(nutritionalPlan.getDateTime(), "America/Santo_Domingo");
+    String date =
+        DatetimeConverter.convertFromUtcToTimezone(
+            nutritionalPlan.getDateTime(), "America/Santo_Domingo");
     try {
       return pdfGeneratorService.generateNutritionalPlan(
           nutritionalPlan.getPatientName(),
@@ -152,10 +157,5 @@ public class NutritionalPlanServiceImpl implements NutritionalPlanService {
     } catch (Exception e) {
       throw new BadRequestException("Error al generar el PDF");
     }
-  }
-
-  private String convertFromUtcToTimezone(OffsetDateTime dateTime, String timezone) {
-    ZonedDateTime zonedDateTime = dateTime.atZoneSameInstant(ZoneId.of(timezone));
-    return zonedDateTime.format(FORMATTER);
   }
 }

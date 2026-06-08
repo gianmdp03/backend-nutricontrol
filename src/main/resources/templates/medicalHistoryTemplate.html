@@ -1,0 +1,553 @@
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Historia Clínica Digital - Edición Especial</title>
+    <style type="text/css">
+        @page {
+            size: A4;
+            margin: 15mm 12mm;
+            background-color: #ffffff;
+            @bottom-right {
+                content: "Página " counter(page) " de " counter(pages);
+                font-family: Arial, sans-serif;
+                font-size: 8pt;
+                color: #854d62;
+            }
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            color: #2d1a22; /* Gris muy oscuro con un toque de vino para mejor lectura */
+            margin: 0;
+            padding: 0;
+            font-size: 9.5pt;
+            line-height: 1.4;
+        }
+
+        /* Encabezado */
+        .header-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+            border-bottom: 3px solid #f35d8f; /* El rosa exacto del cliente en el borde principal */
+            padding-bottom: 5px;
+        }
+
+        .header-title {
+            font-size: 16pt;
+            font-weight: bold;
+            color: #9d174d; /* Rosa oscuro/Berry profundo para excelente contraste en títulos */
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .header-subtitle {
+            font-size: 9pt;
+            color: #f35d8f; /* Rosa exacto del cliente */
+            font-weight: bold;
+            margin-top: 2px;
+        }
+
+        /* Títulos de Sección - Usando una variación elegante más oscura para legibilidad */
+        .section-title {
+            background-color: #9d174d; /* Variación oscura para el fondo */
+            color: #ffffff;
+            font-size: 10pt;
+            font-weight: bold;
+            padding: 5px 8px;
+            margin-top: 15px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            border-radius: 3px;
+        }
+
+        /* Tablas de Datos */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 10px;
+            table-layout: fixed;
+        }
+
+        .data-table td {
+            padding: 5px 6px;
+            vertical-align: top;
+            border: 1px solid #fbcfe8; /* Borde rosa pastel muy sutil */
+        }
+
+        .label {
+            font-weight: bold;
+            color: #831843; /* Texto de etiqueta en tono vino/rosa oscuro */
+            background-color: #fdf2f7; /* Fondo rosa ultra-claro/pastel para suavizar */
+            font-size: 8.5pt;
+            width: 18%;
+        }
+
+        .value {
+            color: #1e1b1c;
+            font-size: 9.5pt;
+            word-wrap: break-word;
+        }
+
+        /* Caja de Alergias - Resaltado de alerta */
+        .alergias-box {
+            border: 1px solid #f472b6;
+            background-color: #fff1f2; /* Fondo rosa/rojo sutil de alerta */
+            color: #9f1239; /* Texto vino oscuro de atención */
+            padding: 6px 8px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            font-size: 9.5pt;
+        }
+
+        /* Bloques de Texto Grandes */
+        .text-block {
+            border: 1px solid #fbcfe8;
+            padding: 8px;
+            background-color: #fff9fc; /* Variación blanquecina con ligero tinte rosa */
+            min-height: 40px;
+            font-size: 9.5pt;
+            color: #1e1b1c;
+            border-radius: 3px;
+            white-space: pre-wrap;
+        }
+
+        /* Layouts de Múltiples Columnas */
+        .columns-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 10px;
+        }
+
+        .columns-table td {
+            vertical-align: top;
+            padding: 0;
+        }
+
+        .column-space {
+            width: 4%;
+        }
+
+        /* Minis Tablas de Interpretación */
+        .ref-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 8pt;
+            margin-top: 5px;
+        }
+
+        .ref-table th {
+            background-color: #be185d; /* Rosa intermedio/fuerte */
+            color: white;
+            font-weight: bold;
+            padding: 3px 5px;
+            border: 1px solid #fbcfe8;
+            text-align: center;
+        }
+
+        .ref-table td {
+            padding: 3px 5px;
+            border: 1px solid #fbcfe8;
+            text-align: center;
+            color: #4c0519;
+        }
+
+        .ref-highlight {
+            background-color: #ffe4e6;
+            color: #9f1239;
+            font-weight: bold;
+        }
+
+        /* Tabla de Revisión por Sistemas */
+        .systems-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .systems-table td {
+            padding: 4px 6px;
+            border: 1px solid #fbcfe8;
+            font-size: 9pt;
+        }
+
+        .systems-system {
+            font-weight: bold;
+            color: #831843;
+            background-color: #fdf2f7; /* Alternancia con rosa pastel */
+            width: 25%;
+        }
+
+        /* Control de salto de página */
+        .page-break {
+            page-break-inside: avoid;
+        }
+    </style>
+</head>
+<body>
+
+<table class="header-table">
+    <tr>
+        <td style="vertical-align: middle;">
+            <div class="header-title">Historia Clínica General</div>
+            <div class="header-subtitle">Sistema Integrado de Gestión Médica</div>
+        </td>
+        <td style="text-align: right; vertical-align: middle; color: #854d62; font-size: 8.5pt;">
+            <strong>Fecha de Emisión:</strong> <span th:text="${#dates.format(#dates.createNow(), 'dd/MM/yyyy HH:mm')}">--/--/----</span>
+        </td>
+    </tr>
+</table>
+
+<div class="section-title">1. Datos Generales del Paciente</div>
+<table class="data-table">
+    <tr>
+        <td class="label">Nombre:</td>
+        <td class="value" colspan="3" th:text="${historia.nombre}">---</td>
+        <td class="label">Cédula:</td>
+        <td class="value" th:text="${historia.cedula}">---</td>
+    </tr>
+    <tr>
+        <td class="label">Edad:</td>
+        <td class="value" th:text="${historia.edad}">---</td>
+        <td class="label">Sexo:</td>
+        <td class="value" th:text="${historia.sexo}">---</td>
+        <td class="label">Estado Civil:</td>
+        <td class="value" th:text="${historia.estadoCivil}">---</td>
+    </tr>
+    <tr>
+        <td class="label">Dirección:</td>
+        <td class="value" colspan="3" th:text="${historia.direccion}">---</td>
+        <td class="label">Teléfono:</td>
+        <td class="value" th:text="${historia.telefono}">---</td>
+    </tr>
+    <tr>
+        <td class="label">Seguro Médico:</td>
+        <td class="value" colspan="2" th:text="${historia.seguroMedico}">---</td>
+        <td class="label">Ocupación:</td>
+        <td class="value" colspan="2" th:text="${historia.ocupacion}">---</td>
+    </tr>
+    <tr>
+        <td class="label">Contacto Emerg.:</td>
+        <td class="value" colspan="5" th:text="${historia.contactoEmergencia}">---</td>
+    </tr>
+</table>
+
+<div class="alergias-box">
+    <strong>ALERGIAS / REACCIONES ADVERSAS:</strong>
+    <span th:text="${historia.alergias}">---</span>
+</div>
+
+<table class="columns-table">
+    <tr>
+        <td style="width: 48%;">
+            <div class="section-title">2. Motivo de Consulta</div>
+            <div class="text-block" th:text="${historia.motivoConsulta}">---</div>
+        </td>
+        <td class="column-space"></td>
+        <td style="width: 48%;">
+            <div class="section-title">3. Historia de la Enfermedad Actual</div>
+            <div class="text-block" th:text="${historia.enfermedadActual}">---</div>
+        </td>
+    </tr>
+</table>
+
+<div class="section-title">4. Antecedentes Personales Patológicos (Hábitos Tóxicos)</div>
+<table class="columns-table">
+    <tr>
+        <td style="width: 55%;">
+            <table class="data-table" style="margin-bottom: 0;">
+                <tr>
+                    <td class="label" style="width: 25%;">Café:</td>
+                    <td class="value" th:text="${historia.habitoCafe}">---</td>
+                </tr>
+                <tr>
+                    <td class="label">Té:</td>
+                    <td class="value" th:text="${historia.habitoTe}">---</td>
+                </tr>
+                <tr>
+                    <td class="label">Alcohol:</td>
+                    <td class="value" th:text="${historia.habitoAlcohol}">---</td>
+                </tr>
+                <tr>
+                    <td class="label">Cigarrillos:</td>
+                    <td class="value" th:text="${historia.habitoCigarrillos}">---</td>
+                </tr>
+                <tr>
+                    <td class="label">Drogas:</td>
+                    <td class="value" th:text="${historia.habitoDrogas}">---</td>
+                </tr>
+            </table>
+            <table class="data-table" style="margin-top: 5px;">
+                <tr>
+                    <td class="label" style="width: 40%; background-color: #fdf2f7;">Índice Tabáquico:</td>
+                    <td class="value" style="font-weight: bold;" th:text="${historia.indiceTabaquico}">---</td>
+                </tr>
+            </table>
+        </td>
+        <td class="column-space"></td>
+        <td style="width: 41%;">
+            <table class="ref-table">
+                <thead>
+                <tr>
+                    <th>Índice</th>
+                    <th>Interpretación</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td>&lt; 5</td>
+                    <td>Bajo</td>
+                </tr>
+                <tr>
+                    <td>5 - 15</td>
+                    <td>Moderado</td>
+                </tr>
+                <tr>
+                    <td>&gt; 15</td>
+                    <td>Alto</td>
+                </tr>
+                <tr class="ref-highlight">
+                    <td>&ge; 20</td>
+                    <td>Riesgo Importante / Valorar</td>
+                </tr>
+                </tbody>
+            </table>
+        </td>
+    </tr>
+</table>
+
+<div class="section-title">5. Antecedentes Familiares Patológicos</div>
+<table class="data-table">
+    <tr>
+        <td class="label" style="width: 15%;">Padre:</td>
+        <td class="value" th:text="${historia.antFamPadre}">---</td>
+    </tr>
+    <tr>
+        <td class="label">Madre:</td>
+        <td class="value" th:text="${historia.antFamMadre}">---</td>
+    </tr>
+    <tr>
+        <td class="label">Abuelos:</td>
+        <td class="value" th:text="${historia.antFamAbuelos}">---</td>
+    </tr>
+    <tr>
+        <td class="label">Otros:</td>
+        <td class="value" th:text="${historia.antFamOtros}">---</td>
+    </tr>
+</table>
+
+<div class="page-break">
+    <div class="section-title">6. Revisión por Sistemas</div>
+    <table class="systems-table">
+        <tr>
+            <td class="systems-system">Cabeza:</td>
+            <td th:text="${historia.revCabeza}">Normocéfalo/ Atraumático, sin lesiones visibles</td>
+        </tr>
+        <tr>
+            <td class="systems-system">Ojos:</td>
+            <td th:text="${historia.revOjos}">Pupilas isocóricas y reactivas a la luz, conjuntivas normocoloreadas</td>
+        </tr>
+        <tr>
+            <td class="systems-system">Oídos:</td>
+            <td th:text="${historia.revOidos}">Pabellones auriculares sin alteraciones visibles, sin secreciones</td>
+        </tr>
+        <tr>
+            <td class="systems-system">Nariz:</td>
+            <td th:text="${historia.revNariz}">Fosas nasales permeables, sin secreciones ni sangrado</td>
+        </tr>
+        <tr>
+            <td class="systems-system">Boca y Garganta:</td>
+            <td th:text="${historia.revBoca}">Mucosa oral húmeda, orofaringe sin hiperemia, sin exudados</td>
+        </tr>
+        <tr>
+            <td class="systems-system">Cuello:</td>
+            <td th:text="${historia.revCuello}">Móvil, sin adenopatías palpables, tiroides no palpable</td>
+        </tr>
+        <tr>
+            <td class="systems-system">Tórax:</td>
+            <td th:text="${historia.revTorax}">Simétrico, expansibilidad conservada, sin tirajes</td>
+        </tr>
+        <tr>
+            <td class="systems-system">Pulmones:</td>
+            <td th:text="${historia.revPulmones}">Murmullo vesicular conservado bilateralmente, sin ruidos agregados
+            </td>
+        </tr>
+        <tr>
+            <td class="systems-system">Corazón:</td>
+            <td th:text="${historia.revCorazon}">Ruidos cardiacos rítmicos, normofonéticos, sin soplos evidentes</td>
+        </tr>
+        <tr>
+            <td class="systems-system">Abdomen:</td>
+            <td th:text="${historia.revAbdomen}">Plano, depresible, no doloroso a la palpación superficial y profunda
+            </td>
+        </tr>
+        <tr>
+            <td class="systems-system">Genitourinario:</td>
+            <td th:text="${historia.revGenitourinario}">Sin alteraciones referidas o no evaluado según el caso</td>
+        </tr>
+        <tr>
+            <td class="systems-system">Extremidades:</td>
+            <td th:text="${historia.revExtremidades}">Sin edema, pulsos periféricos presentes, movilidad conservada</td>
+        </tr>
+        <tr>
+            <td class="systems-system">Músculo/Esquelético:</td>
+            <td th:text="${historia.revMusculo}">Tono y fuerza muscular conservados, sin deformidades ni limitación
+                funcional
+            </td>
+        </tr>
+        <tr>
+            <td class="systems-system">Neurológico:</td>
+            <td th:text="${historia.revNeurologico}">Paciente consciente, orientado en tiempo, espacio y persona, sin
+                déficit aparente
+            </td>
+        </tr>
+        <tr>
+            <td class="systems-system">Piel:</td>
+            <td th:text="${historia.revPiel}">Íntegra, normocoloreada, normotérmica, sin lesiones visibles</td>
+        </tr>
+        <tr>
+            <td class="systems-system">Estado General:</td>
+            <td th:text="${historia.revEstadoGen}">Paciente en buen estado general, hidratado, afebril, colaborador al
+                examen
+            </td>
+        </tr>
+    </table>
+</div>
+
+<div class="page-break">
+    <div class="section-title">7. Signos Vitales y Antropometría</div>
+    <table class="columns-table">
+        <tr>
+            <td style="width: 48%;">
+                <table class="data-table">
+                    <tr>
+                        <td class="label" style="width: 50%;">Presión Arterial:</td>
+                        <td class="value"><span th:text="${historia.presionArterial}">---</span></td>
+                    </tr>
+                    <tr>
+                        <td class="label">Frecuencia Cardíaca:</td>
+                        <td class="value"><span th:text="${historia.frecuenciaCardiaca}">---</span></td>
+                    </tr>
+                    <tr>
+                        <td class="label">Frec. Respiratoria:</td>
+                        <td class="value"><span th:text="${historia.frecuenciaRespiratoria}">---</span></td>
+                    </tr>
+                    <tr>
+                        <td class="label">Temperatura:</td>
+                        <td class="value"><span th:text="${historia.temperatura}">---</span></td>
+                    </tr>
+                    <tr>
+                        <td class="label">Saturación de O2:</td>
+                        <td class="value"><span th:text="${historia.saturacionOxigeno}">---</span></td>
+                    </tr>
+                </table>
+
+                <table class="data-table" style="margin-top: 10px;">
+                    <tr>
+                        <td class="label" style="width: 50%;">Cintura:</td>
+                        <td class="value"><span th:text="${historia.cintura}">---</span></td>
+                    </tr>
+                    <tr>
+                        <td class="label">Cadera:</td>
+                        <td class="value"><span th:text="${historia.cadera}">---</span></td>
+                    </tr>
+                    <tr>
+                        <td class="label" style="background-color: #fdf2f7;">ICC:</td>
+                        <td class="value" style="font-weight: bold;" th:text="${historia.icc}">---</td>
+                    </tr>
+                </table>
+
+                <table class="ref-table">
+                    <thead>
+                    <tr>
+                        <th colspan="2">Interpretación ICC</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td>&le; 0.85 (M) / &le; 0.94 (H)</td>
+                        <td>Normal</td>
+                    </tr>
+                    <tr class="ref-highlight">
+                        <td>&gt; 0.85 (M) / &gt; 0.94 (H)</td>
+                        <td>Riesgo Cardiometabólico</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </td>
+
+            <td class="column-space"></td>
+
+            <td style="width: 48%;">
+                <table class="data-table">
+                    <tr>
+                        <td class="label" style="width: 50%;">Peso:</td>
+                        <td class="value"><span th:text="${historia.peso}">---</span></td>
+                    </tr>
+                    <tr>
+                        <td class="label">Talla²:</td>
+                        <td class="value"><span th:text="${historia.tallaCuadrado}">---</span></td>
+                    </tr>
+                    <tr>
+                        <td class="label" style="background-color: #fdf2f7;">IMC:</td>
+                        <td class="value" style="font-weight: bold;" th:text="${historia.imc}">---</td>
+                    </tr>
+                </table>
+
+                <table class="ref-table" style="margin-top: 10px;">
+                    <thead>
+                    <tr>
+                        <th style="width: 50%;">Rango IMC</th>
+                        <th style="width: 50%;">Clasificación</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td>&lt; 18.5</td>
+                        <td>Bajo Peso</td>
+                    </tr>
+                    <tr style="background-color: #fdf2f7; color: #831843; font-weight: bold;">
+                        <td>18.5 - 24.9</td>
+                        <td>Peso Normal</td>
+                    </tr>
+                    <tr>
+                        <td>25.0 - 29.9</td>
+                        <td>Sobrepeso</td>
+                    </tr>
+                    <tr>
+                        <td>30.0 - 34.9</td>
+                        <td>Obesidad G1</td>
+                    </tr>
+                    <tr>
+                        <td>35.0 - 39.9</td>
+                        <td>Obesidad G2</td>
+                    </tr>
+                    <tr class="ref-highlight">
+                        <td>&ge; 40.0</td>
+                        <td>Obesidad G3 / Mórbida</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </td>
+        </tr>
+    </table>
+</div>
+
+<div class="page-break">
+    <div class="section-title">8. Resultados de Analíticas e Imágenes</div>
+    <div class="text-block" th:text="${historia.resultadosAnaliticas}">---</div>
+</div>
+
+<div class="page-break">
+    <div class="section-title">9. Impresión Diagnóstica</div>
+    <div class="text-block" style="font-weight: bold; background-color: #fdf2f7;"
+         th:text="${historia.impresionDiagnostica}">---
+    </div>
+</div>
+
+<div class="page-break">
+    <div class="section-title">10. Plan Médico</div>
+    <div class="text-block" th:text="${historia.planMedico}">---</div>
+</div>
+
+</body>
+</html>

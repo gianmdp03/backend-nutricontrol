@@ -21,6 +21,8 @@ import com.paypal.sdk.http.response.ApiResponse;
 import com.paypal.sdk.models.*;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -158,6 +160,12 @@ public class PaymentServiceImpl implements PaymentService {
       this.voidPayment(authorizationId);
       throw new ConflictException(
           "El tiempo para pagar expiró y el turno fue liberado. Hemos anulado la retención y los fondos no se cobrarán.");
+    }
+
+    OffsetDateTime nowUtc = OffsetDateTime.now(ZoneOffset.UTC);
+    if (appointment.getStartTimeUtc().isBefore(nowUtc.plusHours(24))) {
+      log.info("El turno (ID: {}) es en menos de 24hs. Capturando fondos inmediatamente.", appointment.getId());
+      this.capturePaymentAsync(authorizationId, appointment.getId());
     }
 
     appointment.setAppointmentStatus(AppointmentStatus.CONFIRMED);

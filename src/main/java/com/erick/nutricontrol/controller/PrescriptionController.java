@@ -35,7 +35,7 @@ public class PrescriptionController {
   @GetMapping("/user")
   public ResponseEntity<Page<PrescriptionDetailDTO>> getAllUserPrescriptions(
       @AuthenticationPrincipal User user,
-      @PageableDefault(page = 0, size = 24, sort = "createdAt", direction = Sort.Direction.DESC)
+      @PageableDefault(page = 0, size = 24, sort = "dateTime", direction = Sort.Direction.DESC)
           Pageable pageable) {
     return ResponseEntity.status(HttpStatus.OK)
         .body(service.getAllUserPrescriptions(user, pageable));
@@ -45,7 +45,7 @@ public class PrescriptionController {
   @GetMapping("/admin/{id}")
   public ResponseEntity<Page<PrescriptionDetailDTO>> adminGetUserPrescriptions(
       @PathVariable Long userId,
-      @PageableDefault(page = 0, size = 24, sort = "createdAt", direction = Sort.Direction.DESC)
+      @PageableDefault(page = 0, size = 24, sort = "dateTime", direction = Sort.Direction.DESC)
           Pageable pageable) {
     return ResponseEntity.status(HttpStatus.OK)
         .body(service.adminGetUserPrescriptions(userId, pageable));

@@ -275,6 +275,37 @@ public class AppointmentServiceImpl implements AppointmentService {
 
   @Override
   @Transactional
+  public AppointmentDetailDTO startAppointment(Long id) {
+    Appointment appointment =
+        repository.findById(id).orElseThrow(() -> new NotFoundException("Turno no encontrado"));
+
+    if (appointment.getAppointmentStatus() != AppointmentStatus.CONFIRMED) {
+      throw new BadRequestException("Solo se pueden iniciar turnos que estén CONFIRMED.");
+    }
+
+    appointment.setAppointmentStatus(AppointmentStatus.IN_PROGRESS);
+    appointment = repository.save(appointment);
+    return mapper.toDetailDTO(appointment);
+  }
+
+  @Override
+  @Transactional
+  public AppointmentDetailDTO completeAppointment(Long id) {
+    Appointment appointment =
+        repository.findById(id).orElseThrow(() -> new NotFoundException("Turno no encontrado"));
+
+    if (appointment.getAppointmentStatus() != AppointmentStatus.IN_PROGRESS) {
+      throw new BadRequestException("Solo se pueden finalizar turnos que estén IN_PROGRESS.");
+    }
+
+    appointment.setAppointmentStatus(AppointmentStatus.COMPLETED);
+    appointment = repository.save(appointment);
+
+    return mapper.toDetailDTO(appointment);
+  }
+
+  @Override
+  @Transactional
   public void deleteAppointment(Long id, User user) {
     Appointment appointment =
         repository.findById(id).orElseThrow(() -> new NotFoundException("Appointment not found"));

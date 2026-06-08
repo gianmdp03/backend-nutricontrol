@@ -13,8 +13,11 @@ import java.time.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,6 +30,26 @@ public class AppointmentTasks {
   private final PaymentService paymentService;
   private final EmailService emailService;
   private final NotificationService notificationService;
+  private final AtomicBoolean isProcessing24h = new AtomicBoolean(false);
+  private final AtomicBoolean isProcessing15m = new AtomicBoolean(false);
+
+  @EventListener(ApplicationReadyEvent.class)
+  @Transactional
+  public void runTasksOnStartup() {
+    log.info("Iniciando chequeo post-reinicio. Ejecutando tareas de recuperación (catch-up)...");
+
+    this.cleanupUnpaidAppointments();
+    this.cleanFinishedAppointments();
+
+    this.markUnattendedAppointments();
+
+    this.autoCapturePayments24hBefore();
+
+    this.send24hReminders();
+    this.send15mReminders();
+
+    log.info("Chequeo de recuperación finalizado exitosamente.");
+  }
 
   @Scheduled(fixedRate = 900000)
   @Transactional
@@ -136,88 +159,114 @@ public class AppointmentTasks {
   @Scheduled(cron = "0 */15 * * * *")
   @Transactional
   public void send24hReminders() {
-    OffsetDateTime nowUtc = OffsetDateTime.now(ZoneOffset.UTC);
-    OffsetDateTime in24HoursUtc = nowUtc.plusHours(24);
-
-    List<Appointment> upcoming =
-        repository.findAppointmentsFor24hReminder(
-            AppointmentStatus.CONFIRMED, nowUtc, in24HoursUtc);
-
-    int emailsSent = 0;
-    for (Appointment app : upcoming) {
-      // EMAIL
-      Map<String, Object> variables = new HashMap<>();
-      variables.put("patientName", app.getUser().getName());
-      variables.put("doctorName", app.getAdmin().getName() + " " + app.getAdmin().getLastname());
-      variables.put("appointmentTime", app.getStartTime().toString() + " hs");
-
-      emailService.sendHtmlTemplateEmail(
-          app.getUser().getEmail(), "Recordatorio: Tu turno es mañana", "reminder-24h", variables);
-
-      // NOTIFICACIÓN
-      Notification notification =
-          Notification.builder()
-              .message(
-                  "Te recordamos que mañana tenés un turno programado con "
-                      + app.getAdmin().getName()
-                      + ".")
-              .type(NotificationType.USER_APPOINTMENT_REMINDER)
-              .build();
-
-      notificationService.createNotification(app.getUser(), notification);
-      app.setReminder24hSent(true);
-      emailsSent++;
+    if (!isProcessing24h.compareAndSet(false, true)) {
+      log.info("Los recordatorios de 24h ya se están procesando por otra vía. Saltando...");
+      return;
     }
+    try {
+      OffsetDateTime nowUtc = OffsetDateTime.now(ZoneOffset.UTC);
+      OffsetDateTime in24HoursUtc = nowUtc.plusHours(24);
 
-    if (emailsSent > 0) {
-      log.info("Se enviaron {} recordatorios y notificaciones de 24 horas.", emailsSent);
+      List<Appointment> upcoming =
+          repository.findAppointmentsFor24hReminder(
+              AppointmentStatus.CONFIRMED, nowUtc, in24HoursUtc);
+
+      int emailsSent = 0;
+      for (Appointment app : upcoming) {
+        if (!app.isReminder24hSent()) {
+          // EMAIL
+          Map<String, Object> variables = new HashMap<>();
+          variables.put("patientName", app.getUser().getName());
+          variables.put(
+              "doctorName", app.getAdmin().getName() + " " + app.getAdmin().getLastname());
+          variables.put("appointmentTime", app.getStartTime().toString() + " hs");
+
+          emailService.sendHtmlTemplateEmail(
+              app.getUser().getEmail(),
+              "Recordatorio: Tu turno es mañana",
+              "reminder-24h",
+              variables);
+
+          // NOTIFICACIÓN
+          Notification notification =
+              Notification.builder()
+                  .message(
+                      "Te recordamos que mañana tenés un turno programado con "
+                          + app.getAdmin().getName()
+                          + ".")
+                  .type(NotificationType.USER_APPOINTMENT_REMINDER)
+                  .build();
+
+          notificationService.createNotification(app.getUser(), notification);
+          app.setReminder24hSent(true);
+          emailsSent++;
+        }
+      }
+      if (emailsSent > 0) {
+        log.info("Se enviaron {} recordatorios y notificaciones de 24 horas.", emailsSent);
+      }
+    } finally {
+      isProcessing24h.set(false);
     }
   }
 
   @Scheduled(cron = "0 * * * * *")
   @Transactional
   public void send15mReminders() {
-    OffsetDateTime nowUtc = OffsetDateTime.now(ZoneOffset.UTC);
-    OffsetDateTime in16MinutesUtc = nowUtc.plusMinutes(16);
-
-    List<Appointment> upcoming =
-        repository.findAppointmentsFor15mReminder(
-            AppointmentStatus.CONFIRMED, nowUtc, in16MinutesUtc);
-
-    int emailsSent = 0;
-    for (Appointment app : upcoming) {
-      if (app.getMeetingLink() != null) {
-        // EMAIL
-        Map<String, Object> variables = new HashMap<>();
-        variables.put("patientName", app.getUser().getName());
-        variables.put("doctorName", app.getAdmin().getName() + " " + app.getAdmin().getLastname());
-        variables.put("meetLink", app.getMeetingLink());
-
-        emailService.sendHtmlTemplateEmail(
-            app.getUser().getEmail(),
-            "¡Tu consulta empieza en 15 minutos!",
-            "reminder-15m",
-            variables);
-
-        // NOTIFICACIÓN
-        Notification notification =
-            Notification.builder()
-                .message(
-                    "¡Preparate! Tu videollamada con "
-                        + app.getAdmin().getName()
-                        + " está por comenzar en 15 minutos.")
-                .type(NotificationType.USER_APPOINTMENT_REMINDER)
-                .build();
-
-        notificationService.createNotification(app.getUser(), notification);
-        app.setReminder15mSent(true);
-        emailsSent++;
-      }
+    if (!isProcessing15m.compareAndSet(false, true)) {
+      log.info("Los recordatorios de 15m ya se están procesando por otra vía. Saltando...");
+      return;
     }
 
-    if (emailsSent > 0) {
-      log.info(
-          "Se enviaron {} recordatorios urgentes HTML y notificaciones (15 minutos).", emailsSent);
+    try {
+      OffsetDateTime nowUtc = OffsetDateTime.now(ZoneOffset.UTC);
+      OffsetDateTime in16MinutesUtc = nowUtc.plusMinutes(16);
+
+      List<Appointment> upcoming =
+          repository.findAppointmentsFor15mReminder(
+              AppointmentStatus.CONFIRMED, nowUtc, in16MinutesUtc);
+
+      int emailsSent = 0;
+      for (Appointment app : upcoming) {
+        if (!app.isReminder15mSent()) {
+          if (app.getMeetingLink() != null) {
+            // EMAIL
+            Map<String, Object> variables = new HashMap<>();
+            variables.put("patientName", app.getUser().getName());
+            variables.put(
+                "doctorName", app.getAdmin().getName() + " " + app.getAdmin().getLastname());
+            variables.put("meetLink", app.getMeetingLink());
+
+            emailService.sendHtmlTemplateEmail(
+                app.getUser().getEmail(),
+                "¡Tu consulta empieza en 15 minutos!",
+                "reminder-15m",
+                variables);
+
+            // NOTIFICACIÓN
+            Notification notification =
+                Notification.builder()
+                    .message(
+                        "¡Preparate! Tu videollamada con "
+                            + app.getAdmin().getName()
+                            + " está por comenzar en 15 minutos.")
+                    .type(NotificationType.USER_APPOINTMENT_REMINDER)
+                    .build();
+
+            notificationService.createNotification(app.getUser(), notification);
+            app.setReminder15mSent(true);
+            emailsSent++;
+          }
+        }
+      }
+
+      if (emailsSent > 0) {
+        log.info(
+            "Se enviaron {} recordatorios urgentes HTML y notificaciones (15 minutos).",
+            emailsSent);
+      }
+    } finally {
+      isProcessing15m.set(false);
     }
   }
 }

@@ -4,6 +4,7 @@ import com.erick.nutricontrol.dto.prescription.PrescriptionDetailDTO;
 import com.erick.nutricontrol.dto.prescription.PrescriptionRequestDTO;
 import com.erick.nutricontrol.exception.BadRequestException;
 import com.erick.nutricontrol.exception.NotFoundException;
+import com.erick.nutricontrol.extra.DatetimeConverter;
 import com.erick.nutricontrol.mapper.PrescriptionMapper;
 import com.erick.nutricontrol.model.AdminPreset;
 import com.erick.nutricontrol.model.Prescription;
@@ -12,10 +13,6 @@ import com.erick.nutricontrol.security.user.model.User;
 import com.erick.nutricontrol.security.user.repository.UserRepository;
 import com.erick.nutricontrol.service.PDFGeneratorService;
 import com.erick.nutricontrol.service.PrescriptionService;
-import java.time.OffsetDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -30,8 +27,6 @@ public class PrescriptionServiceImpl implements PrescriptionService {
   private final PrescriptionMapper mapper;
   private final UserRepository userRepository;
   private final PDFGeneratorService pdfGeneratorService;
-  private static final DateTimeFormatter FORMATTER =
-      DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
 
   @Override
   @Transactional
@@ -47,7 +42,8 @@ public class PrescriptionServiceImpl implements PrescriptionService {
     prescription.setExequatur(adminPreset.getExequatur());
     prescription.setUser(user);
     prescription = repository.save(prescription);
-    String date = convertFromUtcToTimezone(prescription.getDateTime(), user.getTimezone());
+    String date =
+        DatetimeConverter.convertFromUtcToTimezone(prescription.getDateTime(), user.getTimezone());
     return mapper.toDetailDto(prescription, date);
   }
 
@@ -60,7 +56,8 @@ public class PrescriptionServiceImpl implements PrescriptionService {
     String userTimezone = user.getTimezone();
     return page.map(
         prescription -> {
-          String formattedDate = convertFromUtcToTimezone(prescription.getDateTime(), userTimezone);
+          String formattedDate =
+              DatetimeConverter.convertFromUtcToTimezone(prescription.getDateTime(), userTimezone);
           return mapper.toDetailDto(prescription, formattedDate);
         });
   }
@@ -76,7 +73,8 @@ public class PrescriptionServiceImpl implements PrescriptionService {
     String userTimezone = user.getTimezone();
     return page.map(
         prescription -> {
-          String formattedDate = convertFromUtcToTimezone(prescription.getDateTime(), userTimezone);
+          String formattedDate =
+              DatetimeConverter.convertFromUtcToTimezone(prescription.getDateTime(), userTimezone);
           return mapper.toDetailDto(prescription, formattedDate);
         });
   }
@@ -91,7 +89,9 @@ public class PrescriptionServiceImpl implements PrescriptionService {
     prescription.setExequatur(adminPreset.getExequatur());
     prescription.setUser(null);
     prescription = repository.save(prescription);
-    String date = convertFromUtcToTimezone(prescription.getDateTime(), "America/Santo_Domingo");
+    String date =
+        DatetimeConverter.convertFromUtcToTimezone(
+            prescription.getDateTime(), "America/Santo_Domingo");
     return mapper.toDetailDto(prescription, date);
   }
 
@@ -104,7 +104,8 @@ public class PrescriptionServiceImpl implements PrescriptionService {
     return page.map(
         prescription -> {
           String formattedDate =
-              convertFromUtcToTimezone(prescription.getDateTime(), "America/Santo_Domingo");
+              DatetimeConverter.convertFromUtcToTimezone(
+                  prescription.getDateTime(), "America/Santo_Domingo");
           return mapper.toDetailDto(prescription, formattedDate);
         });
   }
@@ -116,7 +117,8 @@ public class PrescriptionServiceImpl implements PrescriptionService {
             .findByIdAndUser(id, user)
             .orElseThrow(() -> new NotFoundException("MedicalCertificate not found"));
     String userTimezone = user.getTimezone();
-    String date = convertFromUtcToTimezone(prescription.getDateTime(), userTimezone);
+    String date =
+        DatetimeConverter.convertFromUtcToTimezone(prescription.getDateTime(), userTimezone);
     try {
       return pdfGeneratorService.generatePrescription(
           prescription.getPatientName(),
@@ -137,7 +139,9 @@ public class PrescriptionServiceImpl implements PrescriptionService {
         repository
             .findByIdAndUserIsNull(id)
             .orElseThrow(() -> new NotFoundException("Prescription not found"));
-    String date = convertFromUtcToTimezone(prescription.getDateTime(), "America/Santo_Domingo");
+    String date =
+        DatetimeConverter.convertFromUtcToTimezone(
+            prescription.getDateTime(), "America/Santo_Domingo");
     try {
       return pdfGeneratorService.generateMedicalCertificate(
           prescription.getPatientName(),
@@ -150,10 +154,5 @@ public class PrescriptionServiceImpl implements PrescriptionService {
     } catch (Exception e) {
       throw new BadRequestException("Error al generar el PDF");
     }
-  }
-
-  private String convertFromUtcToTimezone(OffsetDateTime dateTime, String timezone) {
-    ZonedDateTime zonedDateTime = dateTime.atZoneSameInstant(ZoneId.of(timezone));
-    return zonedDateTime.format(FORMATTER);
   }
 }

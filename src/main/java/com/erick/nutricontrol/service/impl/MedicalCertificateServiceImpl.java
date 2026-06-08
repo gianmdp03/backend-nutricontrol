@@ -4,6 +4,7 @@ import com.erick.nutricontrol.dto.medicalCertificate.MedicalCertificateDetailDTO
 import com.erick.nutricontrol.dto.medicalCertificate.MedicalCertificateRequestDTO;
 import com.erick.nutricontrol.exception.BadRequestException;
 import com.erick.nutricontrol.exception.NotFoundException;
+import com.erick.nutricontrol.extra.DatetimeConverter;
 import com.erick.nutricontrol.mapper.MedicalCertificateMapper;
 import com.erick.nutricontrol.model.AdminPreset;
 import com.erick.nutricontrol.model.MedicalCertificate;
@@ -12,10 +13,6 @@ import com.erick.nutricontrol.security.user.model.User;
 import com.erick.nutricontrol.security.user.repository.UserRepository;
 import com.erick.nutricontrol.service.MedicalCertificateService;
 import com.erick.nutricontrol.service.PDFGeneratorService;
-import java.time.OffsetDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -30,8 +27,6 @@ public class MedicalCertificateServiceImpl implements MedicalCertificateService 
   private final MedicalCertificateMapper mapper;
   private final UserRepository userRepository;
   private final PDFGeneratorService pdfGeneratorService;
-  private static final DateTimeFormatter FORMATTER =
-      DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
 
   @Override
   @Transactional
@@ -48,7 +43,7 @@ public class MedicalCertificateServiceImpl implements MedicalCertificateService 
     medicalCertificate.setExequatur(adminPreset.getExequatur());
     medicalCertificate.setUser(user);
     medicalCertificate = repository.save(medicalCertificate);
-    String date = convertFromUtcToTimezone(medicalCertificate.getDateTime(), user.getTimezone());
+    String date = DatetimeConverter.convertFromUtcToTimezone(medicalCertificate.getDateTime(), user.getTimezone());
     return mapper.toDetailDto(medicalCertificate, date);
   }
 
@@ -62,7 +57,7 @@ public class MedicalCertificateServiceImpl implements MedicalCertificateService 
     String userTimezone = user.getTimezone();
     return page.map(
         certificate -> {
-          String formattedDate = convertFromUtcToTimezone(certificate.getDateTime(), userTimezone);
+          String formattedDate = DatetimeConverter.convertFromUtcToTimezone(certificate.getDateTime(), userTimezone);
           return mapper.toDetailDto(certificate, formattedDate);
         });
   }
@@ -80,7 +75,7 @@ public class MedicalCertificateServiceImpl implements MedicalCertificateService 
     return page.map(
         medicalCertificate -> {
           String formattedDate =
-              convertFromUtcToTimezone(medicalCertificate.getDateTime(), userTimezone);
+                  DatetimeConverter.convertFromUtcToTimezone(medicalCertificate.getDateTime(), userTimezone);
           return mapper.toDetailDto(medicalCertificate, formattedDate);
         });
   }
@@ -97,7 +92,7 @@ public class MedicalCertificateServiceImpl implements MedicalCertificateService 
     medicalCertificate.setUser(null);
     medicalCertificate = repository.save(medicalCertificate);
     String date =
-        convertFromUtcToTimezone(medicalCertificate.getDateTime(), "America/Santo_Domingo");
+            DatetimeConverter.convertFromUtcToTimezone(medicalCertificate.getDateTime(), "America/Santo_Domingo");
     return mapper.toDetailDto(medicalCertificate, date);
   }
 
@@ -110,7 +105,7 @@ public class MedicalCertificateServiceImpl implements MedicalCertificateService 
     return page.map(
         certificate -> {
           String formattedDate =
-              convertFromUtcToTimezone(certificate.getDateTime(), "America/Santo_Domingo");
+                  DatetimeConverter.convertFromUtcToTimezone(certificate.getDateTime(), "America/Santo_Domingo");
           return mapper.toDetailDto(certificate, formattedDate);
         });
   }
@@ -122,7 +117,7 @@ public class MedicalCertificateServiceImpl implements MedicalCertificateService 
             .findByIdAndUser(id, user)
             .orElseThrow(() -> new NotFoundException("MedicalCertificate not found"));
     String userTimezone = user.getTimezone();
-    String date = convertFromUtcToTimezone(medicalCertificate.getDateTime(), userTimezone);
+    String date = DatetimeConverter.convertFromUtcToTimezone(medicalCertificate.getDateTime(), userTimezone);
     try {
       return pdfGeneratorService.generateMedicalCertificate(
           medicalCertificate.getPatientName(),
@@ -144,7 +139,7 @@ public class MedicalCertificateServiceImpl implements MedicalCertificateService 
             .findByIdAndUserIsNull(id)
             .orElseThrow(() -> new NotFoundException("MedicalCertificate not found"));
     String date =
-        convertFromUtcToTimezone(medicalCertificate.getDateTime(), "America/Santo_Domingo");
+            DatetimeConverter.convertFromUtcToTimezone(medicalCertificate.getDateTime(), "America/Santo_Domingo");
     try {
       return pdfGeneratorService.generateMedicalCertificate(
           medicalCertificate.getPatientName(),
@@ -157,10 +152,5 @@ public class MedicalCertificateServiceImpl implements MedicalCertificateService 
     } catch (Exception e) {
       throw new BadRequestException("Error al generar el PDF");
     }
-  }
-
-  private String convertFromUtcToTimezone(OffsetDateTime dateTime, String timezone) {
-    ZonedDateTime zonedDateTime = dateTime.atZoneSameInstant(ZoneId.of(timezone));
-    return zonedDateTime.format(FORMATTER);
   }
 }

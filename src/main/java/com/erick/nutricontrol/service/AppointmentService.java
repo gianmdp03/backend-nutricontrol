@@ -23,6 +23,10 @@ public interface AppointmentService {
 
   AppointmentDetailDTO getAppointmentById(User user, Long id);
 
+  AppointmentDetailDTO startAppointment(Long id);
+
+  AppointmentDetailDTO completeAppointment(Long id);
+
   void deleteAppointment(Long id, User user);
 
   void adminDeleteAppointment(Long id, boolean refund);

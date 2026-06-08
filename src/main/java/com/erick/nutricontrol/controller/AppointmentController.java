@@ -66,6 +66,18 @@ public class AppointmentController {
     return ResponseEntity.status(HttpStatus.OK).body(service.getAppointmentById(user, id));
   }
 
+  @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+  @PostMapping("/{id}/start")
+  public ResponseEntity<AppointmentDetailDTO> startAppointment(@PathVariable Long id) {
+    return ResponseEntity.ok(service.startAppointment(id));
+  }
+
+  @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+  @PostMapping("/{id}/complete")
+  public ResponseEntity<AppointmentDetailDTO> completeAppointment(@PathVariable Long id) {
+    return ResponseEntity.ok(service.completeAppointment(id));
+  }
+
   @PreAuthorize("hasAuthority('ROLE_PATIENT')")
   @DeleteMapping("/{id}")
   public ResponseEntity<Void> deleteAppointment(

@@ -33,7 +33,7 @@ public class ReviewController {
   @GetMapping("/admin")
   public ResponseEntity<Page<ReviewDetailDTO>> listAdminReviews(
       @AuthenticationPrincipal User admin,
-      @PageableDefault(page = 0, size = 24, sort = "createdAt", direction = Sort.Direction.DESC)
+      @PageableDefault(page = 0, size = 24, sort = "date", direction = Sort.Direction.DESC)
           Pageable pageable) {
     return ResponseEntity.status(HttpStatus.OK)
         .body(reviewService.listAdminReviews(admin, pageable));

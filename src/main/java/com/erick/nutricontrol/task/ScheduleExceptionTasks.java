@@ -4,6 +4,8 @@ import com.erick.nutricontrol.model.ScheduleException;
 import com.erick.nutricontrol.repository.ScheduleExceptionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,23 +18,31 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 public class ScheduleExceptionTasks {
-    private final ScheduleExceptionRepository repository;
+  private final ScheduleExceptionRepository repository;
 
-    @Scheduled(cron = "0 0 0 * * *", zone = "America/Santo_Domingo")
-    @Transactional
-    public void deleteOldScheduleExceptions() {
-        log.info("Buscando excepciones de horario pasadas para eliminar (Hora RD)...");
+  @EventListener(ApplicationReadyEvent.class)
+  @Transactional
+  public void runTasksOnStartup() {
+    log.info("Iniciando chequeo post-reinicio en ScheduleExceptionTasks...");
+    this.deleteOldScheduleExceptions();
+  }
 
-        ZoneId dominicanRepublicZone = ZoneId.of("America/Santo_Domingo");
-        LocalDate todayDR = LocalDate.now(dominicanRepublicZone);
+  @Scheduled(cron = "0 0 0 * * *", zone = "America/Santo_Domingo")
+  @Transactional
+  public void deleteOldScheduleExceptions() {
+    log.info("Buscando excepciones de horario pasadas para eliminar (Hora RD)...");
 
-        List<ScheduleException> pastExceptions = repository.findByDateBefore(todayDR);
+    ZoneId dominicanRepublicZone = ZoneId.of("America/Santo_Domingo");
+    LocalDate todayDR = LocalDate.now(dominicanRepublicZone);
 
-        if (!pastExceptions.isEmpty()) {
-            repository.deleteAll(pastExceptions);
-            log.info("Se eliminó físicamente la basura: {} excepciones de horario.", pastExceptions.size());
-        } else {
-            log.info("No hay excepciones de horario pasadas para limpiar.");
-        }
+    List<ScheduleException> pastExceptions = repository.findByDateBefore(todayDR);
+
+    if (!pastExceptions.isEmpty()) {
+      repository.deleteAll(pastExceptions);
+      log.info(
+          "Se eliminó físicamente la basura: {} excepciones de horario.", pastExceptions.size());
+    } else {
+      log.info("No hay excepciones de horario pasadas para limpiar.");
     }
+  }
 }

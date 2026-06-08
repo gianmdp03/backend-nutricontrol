@@ -39,6 +39,8 @@ public class ReviewServiceImpl implements ReviewService {
     User admin = appointment.getAdmin();
     review.setAdmin(admin);
     review = repository.save(review);
+    admin.setReviewCount(admin.getReviewCount() + 1);
+    admin.setTotalScore(admin.getTotalScore() + review.getScore());
     BigDecimal totalScoreBD = BigDecimal.valueOf(admin.getTotalScore());
     BigDecimal countBD = BigDecimal.valueOf(admin.getReviewCount());
     BigDecimal averageBD = totalScoreBD.divide(countBD, 2, RoundingMode.HALF_UP);
