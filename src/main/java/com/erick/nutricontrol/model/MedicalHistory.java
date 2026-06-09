@@ -3,8 +3,9 @@ package com.erick.nutricontrol.model;
 import com.erick.nutricontrol.extra.*;
 import com.erick.nutricontrol.security.user.model.User;
 import jakarta.persistence.*;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -25,7 +26,8 @@ public class MedicalHistory {
   private PatientData patientData;
 
   @OneToMany(mappedBy = "medicalHistory")
-  private Set<MedicalHistoryTracking> trackings = new HashSet<>();
+  @OrderBy("datetime DESC")
+  private Set<MedicalHistoryTracking> trackings = new LinkedHashSet<>();
 
   @Column(columnDefinition = "TEXT")
   private String allergies;
@@ -53,6 +55,7 @@ public class MedicalHistory {
   @JoinColumn(name = "admin_id")
   private User admin;
 
+  @Builder
   public MedicalHistory(
       PatientData patientData,
       String allergies,

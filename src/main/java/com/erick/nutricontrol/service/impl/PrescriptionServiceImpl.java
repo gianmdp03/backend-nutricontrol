@@ -4,7 +4,6 @@ import com.erick.nutricontrol.dto.prescription.PrescriptionDetailDTO;
 import com.erick.nutricontrol.dto.prescription.PrescriptionRequestDTO;
 import com.erick.nutricontrol.exception.BadRequestException;
 import com.erick.nutricontrol.exception.NotFoundException;
-import com.erick.nutricontrol.extra.DatetimeConverter;
 import com.erick.nutricontrol.mapper.PrescriptionMapper;
 import com.erick.nutricontrol.model.AdminPreset;
 import com.erick.nutricontrol.model.Prescription;

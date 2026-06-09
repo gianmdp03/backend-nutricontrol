@@ -3,6 +3,7 @@ package com.erick.nutricontrol.model;
 import jakarta.persistence.*;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -36,6 +37,7 @@ public class MedicalHistoryTracking {
   @Column(nullable = false, updatable = false)
   private OffsetDateTime datetime = OffsetDateTime.now(ZoneOffset.UTC);
 
+  @Builder
   public MedicalHistoryTracking(
       String consultationReason,
       String labResultsAndImages,
@@ -47,5 +49,17 @@ public class MedicalHistoryTracking {
     this.diagnosticImpression = diagnosticImpression;
     this.medicalPlan = medicalPlan;
     this.medicalHistory = medicalHistory;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof MedicalHistoryTracking that)) return false;
+    return id != null && id.equals(that.getId());
+  }
+
+  @Override
+  public int hashCode() {
+    return getClass().hashCode();
   }
 }

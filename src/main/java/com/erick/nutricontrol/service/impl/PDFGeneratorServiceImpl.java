@@ -175,4 +175,7 @@ public class PDFGeneratorServiceImpl implements PDFGeneratorService {
 
     return outputStream.toByteArray();
   }
+
+  @Override
+  public byte[] generateMedicalHistory()
 }

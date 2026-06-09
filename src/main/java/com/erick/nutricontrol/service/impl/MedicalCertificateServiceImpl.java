@@ -43,7 +43,9 @@ public class MedicalCertificateServiceImpl implements MedicalCertificateService 
     medicalCertificate.setExequatur(adminPreset.getExequatur());
     medicalCertificate.setUser(user);
     medicalCertificate = repository.save(medicalCertificate);
-    String date = DatetimeConverter.convertFromUtcToTimezone(medicalCertificate.getDateTime(), user.getTimezone());
+    String date =
+        DatetimeConverter.convertFromUtcToTimezone(
+            medicalCertificate.getDateTime(), user.getTimezone());
     return mapper.toDetailDto(medicalCertificate, date);
   }
 
@@ -57,7 +59,8 @@ public class MedicalCertificateServiceImpl implements MedicalCertificateService 
     String userTimezone = user.getTimezone();
     return page.map(
         certificate -> {
-          String formattedDate = DatetimeConverter.convertFromUtcToTimezone(certificate.getDateTime(), userTimezone);
+          String formattedDate =
+              DatetimeConverter.convertFromUtcToTimezone(certificate.getDateTime(), userTimezone);
           return mapper.toDetailDto(certificate, formattedDate);
         });
   }
@@ -75,7 +78,8 @@ public class MedicalCertificateServiceImpl implements MedicalCertificateService 
     return page.map(
         medicalCertificate -> {
           String formattedDate =
-                  DatetimeConverter.convertFromUtcToTimezone(medicalCertificate.getDateTime(), userTimezone);
+              DatetimeConverter.convertFromUtcToTimezone(
+                  medicalCertificate.getDateTime(), userTimezone);
           return mapper.toDetailDto(medicalCertificate, formattedDate);
         });
   }
@@ -92,7 +96,8 @@ public class MedicalCertificateServiceImpl implements MedicalCertificateService 
     medicalCertificate.setUser(null);
     medicalCertificate = repository.save(medicalCertificate);
     String date =
-            DatetimeConverter.convertFromUtcToTimezone(medicalCertificate.getDateTime(), "America/Santo_Domingo");
+        DatetimeConverter.convertFromUtcToTimezone(
+            medicalCertificate.getDateTime(), "America/Santo_Domingo");
     return mapper.toDetailDto(medicalCertificate, date);
   }
 
@@ -105,7 +110,8 @@ public class MedicalCertificateServiceImpl implements MedicalCertificateService 
     return page.map(
         certificate -> {
           String formattedDate =
-                  DatetimeConverter.convertFromUtcToTimezone(certificate.getDateTime(), "America/Santo_Domingo");
+              DatetimeConverter.convertFromUtcToTimezone(
+                  certificate.getDateTime(), "America/Santo_Domingo");
           return mapper.toDetailDto(certificate, formattedDate);
         });
   }
@@ -117,7 +123,8 @@ public class MedicalCertificateServiceImpl implements MedicalCertificateService 
             .findByIdAndUser(id, user)
             .orElseThrow(() -> new NotFoundException("MedicalCertificate not found"));
     String userTimezone = user.getTimezone();
-    String date = DatetimeConverter.convertFromUtcToTimezone(medicalCertificate.getDateTime(), userTimezone);
+    String date =
+        DatetimeConverter.convertFromUtcToTimezone(medicalCertificate.getDateTime(), userTimezone);
     try {
       return pdfGeneratorService.generateMedicalCertificate(
           medicalCertificate.getPatientName(),
@@ -139,7 +146,8 @@ public class MedicalCertificateServiceImpl implements MedicalCertificateService 
             .findByIdAndUserIsNull(id)
             .orElseThrow(() -> new NotFoundException("MedicalCertificate not found"));
     String date =
-            DatetimeConverter.convertFromUtcToTimezone(medicalCertificate.getDateTime(), "America/Santo_Domingo");
+        DatetimeConverter.convertFromUtcToTimezone(
+            medicalCertificate.getDateTime(), "America/Santo_Domingo");
     try {
       return pdfGeneratorService.generateMedicalCertificate(
           medicalCertificate.getPatientName(),
