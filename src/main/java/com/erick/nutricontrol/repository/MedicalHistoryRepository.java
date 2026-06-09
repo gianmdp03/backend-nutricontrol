@@ -8,5 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface MedicalHistoryRepository extends JpaRepository<MedicalHistory, Long> {
   boolean existsByUserId(Long userId);
 
+  Optional<MedicalHistory> findByUserId(Long userId);
+
   Optional<MedicalHistory> findByUserIdAndAdmin(Long userId, User admin);
 }

@@ -19,4 +19,6 @@ public interface MedicalHistoryService {
 
   MedicalHistoryDetailDTO updateMedicalHistory(
       Long userId, User admin, MedicalHistoryUpdateDTO dto);
+
+  byte[] getPDFMedicalHistory(Long userId, Long trackingId);
 }
