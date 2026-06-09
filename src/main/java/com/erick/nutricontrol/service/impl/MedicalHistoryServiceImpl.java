@@ -5,6 +5,7 @@ import com.erick.nutricontrol.dto.medicalHistory.MedicalHistoryRequestDTO;
 import com.erick.nutricontrol.dto.medicalHistory.MedicalHistoryUpdateDTO;
 import com.erick.nutricontrol.dto.medicalHistoryTracking.MedicalHistoryTrackingDetailDTO;
 import com.erick.nutricontrol.dto.medicalHistoryTracking.MedicalHistoryTrackingRequestDTO;
+import com.erick.nutricontrol.exception.BadRequestException;
 import com.erick.nutricontrol.exception.ConflictException;
 import com.erick.nutricontrol.exception.NotFoundException;
 import com.erick.nutricontrol.extra.DatetimeConverter;
@@ -15,6 +16,7 @@ import com.erick.nutricontrol.repository.MedicalHistoryTrackingRepository;
 import com.erick.nutricontrol.security.user.model.User;
 import com.erick.nutricontrol.security.user.repository.UserRepository;
 import com.erick.nutricontrol.service.MedicalHistoryService;
+import com.erick.nutricontrol.service.PDFGeneratorService;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -30,6 +32,7 @@ public class MedicalHistoryServiceImpl implements MedicalHistoryService {
   private final MedicalHistoryRepository medicalHistoryRepository;
   private final MedicalHistoryTrackingRepository medicalHistoryTrackingRepository;
   private final UserRepository userRepository;
+  private final PDFGeneratorService pdfGeneratorService;
 
   @Override
   @Transactional
@@ -100,6 +103,16 @@ public class MedicalHistoryServiceImpl implements MedicalHistoryService {
     updateMedicalHistory(dto, medicalHistory);
     medicalHistory = medicalHistoryRepository.save(medicalHistory);
     return toDetailDTO(medicalHistory);
+  }
+
+  @Override
+  public byte[] getPDFMedicalHistory(Long userId, Long trackingId){
+    MedicalHistory medicalHistory = medicalHistoryRepository.findByUserId(userId).orElseThrow(()-> new NotFoundException("User hasn't got medical history, please create it"));
+    try{
+      return pdfGeneratorService.generateMedicalHistory(medicalHistory, trackingId);
+    } catch (Exception e) {
+      throw new BadRequestException("Error al generar el PDF");
+    }
   }
 
   private MedicalHistoryDetailDTO toDetailDTO(MedicalHistory entity) {

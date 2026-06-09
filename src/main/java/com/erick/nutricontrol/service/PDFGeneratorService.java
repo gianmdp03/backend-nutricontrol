@@ -1,6 +1,7 @@
 package com.erick.nutricontrol.service;
 
 import com.erick.nutricontrol.extra.DailyMenu;
+import com.erick.nutricontrol.model.MedicalHistory;
 import java.time.DayOfWeek;
 import java.util.Map;
 
@@ -37,4 +38,6 @@ public interface PDFGeneratorService {
       String date,
       String textareaTexto)
       throws Exception;
+
+  byte[] generateMedicalHistory(MedicalHistory medicalHistory, Long trackingId) throws Exception;
 }
