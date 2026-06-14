@@ -154,6 +154,15 @@ public class PDFGeneratorServiceImpl implements PDFGeneratorService {
     context.setVariable("textareaTexto", textareaTexto);
     context.setVariable("plan", weeklyMenu);
 
+    try {
+      ClassPathResource logoResource = new ClassPathResource("images/logo.png");
+      byte[] logoBytes = logoResource.getInputStream().readAllBytes();
+      String base64Logo = java.util.Base64.getEncoder().encodeToString(logoBytes);
+      context.setVariable("logoBase64", base64Logo);
+    } catch (Exception e) {
+      System.err.println("No se pudo cargar el logo: " + e.getMessage());
+    }
+
     String htmlContent = templateEngine.process("nutritionalTemplate", context);
 
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -181,17 +190,19 @@ public class PDFGeneratorServiceImpl implements PDFGeneratorService {
   }
 
   @Override
-  public byte[] generateMedicalHistory(MedicalHistory medicalHistory, Long trackingId) throws Exception {
+  public byte[] generateMedicalHistory(MedicalHistory medicalHistory, Long trackingId)
+      throws Exception {
     Context context = new Context();
     Map<String, Object> historia = new HashMap<>();
 
-    Function<Object, String> safeStr = val ->
-            (val != null && !val.toString().trim().isEmpty()) ? val.toString() : "---";
+    Function<Object, String> safeStr =
+        val -> (val != null && !val.toString().trim().isEmpty()) ? val.toString() : "---";
 
     MedicalHistoryTracking selectedTracking = null;
     if (medicalHistory.getTrackings() != null && !medicalHistory.getTrackings().isEmpty()) {
       if (trackingId != null) {
-        selectedTracking = medicalHistory.getTrackings().stream()
+        selectedTracking =
+            medicalHistory.getTrackings().stream()
                 .filter(t -> t.getId().equals(trackingId))
                 .findFirst()
                 .orElse(medicalHistory.getTrackings().iterator().next());
@@ -214,8 +225,19 @@ public class PDFGeneratorServiceImpl implements PDFGeneratorService {
       historia.put("ocupacion", safeStr.apply(pd.occupation()));
       historia.put("contactoEmergencia", safeStr.apply(pd.emergencyContact()));
     } else {
-      String[] pdKeys = {"nombre", "cedula", "edad", "sexo", "estadoCivil", "direccion", "telefono", "seguroMedico", "ocupacion", "contactoEmergencia"};
-      for(String k : pdKeys) historia.put(k, "---");
+      String[] pdKeys = {
+        "nombre",
+        "cedula",
+        "edad",
+        "sexo",
+        "estadoCivil",
+        "direccion",
+        "telefono",
+        "seguroMedico",
+        "ocupacion",
+        "contactoEmergencia"
+      };
+      for (String k : pdKeys) historia.put(k, "---");
     }
 
     historia.put("alergias", safeStr.apply(medicalHistory.getAllergies()));
@@ -224,8 +246,10 @@ public class PDFGeneratorServiceImpl implements PDFGeneratorService {
       historia.put("motivoConsulta", safeStr.apply(selectedTracking.getConsultationReason()));
 
       historia.put("enfermedadActual", safeStr.apply(medicalHistory.getCurrentIllnessHistory()));
-      historia.put("resultadosAnaliticas", safeStr.apply(selectedTracking.getLabResultsAndImages()));
-      historia.put("impresionDiagnostica", safeStr.apply(selectedTracking.getDiagnosticImpression()));
+      historia.put(
+          "resultadosAnaliticas", safeStr.apply(selectedTracking.getLabResultsAndImages()));
+      historia.put(
+          "impresionDiagnostica", safeStr.apply(selectedTracking.getDiagnosticImpression()));
       historia.put("planMedico", safeStr.apply(selectedTracking.getMedicalPlan()));
     } else {
       historia.put("motivoConsulta", "---");
@@ -244,8 +268,15 @@ public class PDFGeneratorServiceImpl implements PDFGeneratorService {
       historia.put("habitoDrogas", safeStr.apply(th.drugs()));
       historia.put("indiceTabaquico", safeStr.apply(th.smokingIndex()));
     } else {
-      String[] thKeys = {"habitoCafe", "habitoTe", "habitoAlcohol", "habitoCigarrillos", "habitoDrogas", "indiceTabaquico"};
-      for(String k : thKeys) historia.put(k, "---");
+      String[] thKeys = {
+        "habitoCafe",
+        "habitoTe",
+        "habitoAlcohol",
+        "habitoCigarrillos",
+        "habitoDrogas",
+        "indiceTabaquico"
+      };
+      for (String k : thKeys) historia.put(k, "---");
     }
 
     if (medicalHistory.getFamilyHistory() != null) {
@@ -256,7 +287,7 @@ public class PDFGeneratorServiceImpl implements PDFGeneratorService {
       historia.put("antFamOtros", safeStr.apply(fh.others()));
     } else {
       String[] fhKeys = {"antFamPadre", "antFamMadre", "antFamAbuelos", "antFamOtros"};
-      for(String k : fhKeys) historia.put(k, "---");
+      for (String k : fhKeys) historia.put(k, "---");
     }
 
     if (medicalHistory.getSystemReview() != null) {
@@ -278,8 +309,25 @@ public class PDFGeneratorServiceImpl implements PDFGeneratorService {
       historia.put("revPiel", safeStr.apply(sr.skin()));
       historia.put("revEstadoGen", safeStr.apply(sr.generalStatus()));
     } else {
-      String[] srKeys = {"revCabeza", "revOjos", "revOidos", "revNariz", "revBoca", "revCuello", "revTorax", "revPulmones", "revCorazon", "revAbdomen", "revGenitourinario", "revExtremidades", "revMusculo", "revNeurologico", "revPiel", "revEstadoGen"};
-      for(String k : srKeys) historia.put(k, "---");
+      String[] srKeys = {
+        "revCabeza",
+        "revOjos",
+        "revOidos",
+        "revNariz",
+        "revBoca",
+        "revCuello",
+        "revTorax",
+        "revPulmones",
+        "revCorazon",
+        "revAbdomen",
+        "revGenitourinario",
+        "revExtremidades",
+        "revMusculo",
+        "revNeurologico",
+        "revPiel",
+        "revEstadoGen"
+      };
+      for (String k : srKeys) historia.put(k, "---");
     }
 
     if (medicalHistory.getVitalSigns() != null) {
@@ -296,8 +344,20 @@ public class PDFGeneratorServiceImpl implements PDFGeneratorService {
       historia.put("tallaCuadrado", safeStr.apply(vs.heightSquared()));
       historia.put("imc", safeStr.apply(vs.bmi()));
     } else {
-      String[] vsKeys = {"presionArterial", "frecuenciaCardiaca", "frecuenciaRespiratoria", "temperatura", "saturacionOxigeno", "cintura", "cadera", "icc", "peso", "tallaCuadrado", "imc"};
-      for(String k : vsKeys) historia.put(k, "---");
+      String[] vsKeys = {
+        "presionArterial",
+        "frecuenciaCardiaca",
+        "frecuenciaRespiratoria",
+        "temperatura",
+        "saturacionOxigeno",
+        "cintura",
+        "cadera",
+        "icc",
+        "peso",
+        "tallaCuadrado",
+        "imc"
+      };
+      for (String k : vsKeys) historia.put(k, "---");
     }
 
     context.setVariable("historia", historia);
@@ -311,11 +371,13 @@ public class PDFGeneratorServiceImpl implements PDFGeneratorService {
     tempFontFile.deleteOnExit();
 
     try (InputStream is = fontResource.getInputStream();
-         FileOutputStream os = new FileOutputStream(tempFontFile)) {
+        FileOutputStream os = new FileOutputStream(tempFontFile)) {
       is.transferTo(os);
     }
 
-    renderer.getFontResolver().addFont(tempFontFile.getAbsolutePath(), BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
+    renderer
+        .getFontResolver()
+        .addFont(tempFontFile.getAbsolutePath(), BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
     renderer.setDocumentFromString(htmlContent);
     renderer.layout();
     renderer.createPDF(outputStream);

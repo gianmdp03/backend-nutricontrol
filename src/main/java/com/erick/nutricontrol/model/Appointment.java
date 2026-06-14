@@ -55,6 +55,8 @@ public class Appointment {
   @Enumerated(EnumType.STRING)
   private AppointmentStatus appointmentStatus;
 
+
+
   @Column(name = "meeting_link")
   private String meetingLink;
 

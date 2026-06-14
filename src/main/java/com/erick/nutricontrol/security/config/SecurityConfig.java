@@ -53,7 +53,7 @@ public class SecurityConfig {
                     .requestMatchers("/api/schedule-rules/**")
                     .hasRole("ADMIN")
                     // SERVICE
-                    .requestMatchers("/api/services/public")
+                    .requestMatchers("/api/services/public", "/api/services/public/**")
                     .permitAll()
                     .requestMatchers("/api/services/**")
                     .hasRole("ADMIN")
@@ -91,6 +91,7 @@ public class SecurityConfig {
             "http://localhost:4200",
             "http://localhost:50093",
             "http://localhost:3000",
+            "http://26.117.165.31:3000",
             "http://190.191.214.105:3000"));
     configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
     configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
