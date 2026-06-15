@@ -348,8 +348,11 @@ public class AppointmentServiceImpl implements AppointmentService {
   public Page<AppointmentDetailDTO> listAdminAppointments(User admin, Pageable pageable) {
     List<AppointmentStatus> statuses = new ArrayList<>();
     statuses.add(AppointmentStatus.CONFIRMED);
+    statuses.add(AppointmentStatus.IN_PROGRESS);
+    statuses.add(AppointmentStatus.COMPLETED);
     statuses.add(AppointmentStatus.CANCELLED_REFUND);
     statuses.add(AppointmentStatus.CANCELLED_WITHOUT_REFUND);
+    statuses.add(AppointmentStatus.USER_DIDNT_COME);
     Page<Appointment> page =
         repository.findByAdminAndAppointmentStatusIn(admin, statuses, pageable);
     if (page.isEmpty()) {
@@ -363,12 +366,12 @@ public class AppointmentServiceImpl implements AppointmentService {
     Appointment appointment =
         repository.findById(id).orElseThrow(() -> new NotFoundException("Appointment not found"));
     if (user.getRole().equals(Role.ROLE_ADMIN)) {
-      if (appointment.getAdmin() != user) {
+      if (!appointment.getAdmin().getId().equals(user.getId())) {
         throw new BadRequestException("Bad Request");
       }
     }
     if (user.getRole().equals(Role.ROLE_PATIENT)) {
-      if (appointment.getUser() != user) {
+      if (appointment.getUser() == null || !appointment.getUser().getId().equals(user.getId())) {
         throw new BadRequestException("Bad Request");
       }
     }

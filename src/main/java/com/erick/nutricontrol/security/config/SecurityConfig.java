@@ -32,10 +32,10 @@ public class SecurityConfig {
             auth ->
                 auth
                     // APPOINTMENTS
-                    .requestMatchers("/api/appointments/admin")
+                    .requestMatchers("/api/appointments/admin", "/api/appointments/admin/**")
                     .hasRole("ADMIN")
                     .requestMatchers("/api/appointments/**")
-                    .hasRole("PATIENT")
+                    .hasAnyRole("ADMIN", "PATIENT")
                     // MEDICALRECORD
                     .requestMatchers("/api/medical-records")
                     .hasRole("PATIENT")
