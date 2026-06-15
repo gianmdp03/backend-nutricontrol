@@ -1,6 +1,7 @@
 package com.erick.nutricontrol.dto.appointment;
 
 import com.erick.nutricontrol._enum.AppointmentStatus;
+import com.erick.nutricontrol._enum.AppointmentType;
 import com.erick.nutricontrol.security.user.dto.user.AdminDetailDTO;
 import com.erick.nutricontrol.security.user.dto.user.UserDetailDTO;
 import java.time.LocalDate;
@@ -14,4 +15,5 @@ public record AppointmentDetailDTO(
     AdminDetailDTO admin,
     UserDetailDTO user,
     AppointmentStatus appointmentStatus,
+    AppointmentType appointmentType,
     String meetingLink) {}

@@ -1,6 +1,7 @@
 package com.erick.nutricontrol.model;
 
 import com.erick.nutricontrol._enum.AppointmentStatus;
+import com.erick.nutricontrol._enum.AppointmentType;
 import com.erick.nutricontrol.security.user.model.User;
 import jakarta.persistence.*;
 import java.time.*;
@@ -55,7 +56,9 @@ public class Appointment {
   @Enumerated(EnumType.STRING)
   private AppointmentStatus appointmentStatus;
 
-
+  @Column(nullable = false)
+  @Enumerated(EnumType.STRING)
+  private AppointmentType appointmentType;
 
   @Column(name = "meeting_link")
   private String meetingLink;
@@ -79,12 +82,14 @@ public class Appointment {
       LocalDate date,
       LocalTime startTime,
       LocalTime endTime,
+      AppointmentType appointmentType,
       User user,
       User admin,
       AppointmentStatus appointmentStatus) {
     this.date = date;
     this.startTime = startTime;
     this.endTime = endTime;
+    this.appointmentType = appointmentType;
     this.user = user;
     this.admin = admin;
     this.appointmentStatus = appointmentStatus;
