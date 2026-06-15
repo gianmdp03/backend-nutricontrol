@@ -27,6 +27,17 @@ import org.springframework.web.bind.annotation.*;
 public class AppointmentController {
   private final AppointmentService service;
 
+  @PostMapping("/manual-appointment/{patientId}")
+  @PreAuthorize("hasRole('ROLE_ADMIN')")
+  public ResponseEntity<AppointmentDetailDTO> createManualAppointment(
+      @AuthenticationPrincipal User admin,
+      @PathVariable Long patientId,
+      @Valid @RequestBody AppointmentRequestDTO requestDTO) {
+
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(service.createManualPaidAppointment(admin, patientId, requestDTO));
+  }
+
   @PreAuthorize("hasAuthority('ROLE_PATIENT')")
   @PostMapping
   public ResponseEntity<PaymentOrderResponseDTO> addAppointment(
@@ -84,6 +95,13 @@ public class AppointmentController {
       @PathVariable Long id, @AuthenticationPrincipal User user) {
     service.deleteAppointment(id, user);
     return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+  }
+
+  @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+  @PatchMapping("/force-appointment/{id}")
+  public ResponseEntity<AppointmentDetailDTO> forceConfirmPendingAppointment(
+      @PathVariable Long id) {
+    return ResponseEntity.status(HttpStatus.OK).body(service.forceConfirmPendingAppointment(id));
   }
 
   @PreAuthorize("hasAuthority('ROLE_ADMIN')")

@@ -51,6 +51,9 @@ public class PaymentServiceImpl implements PaymentService {
   private final GoogleMeetService googleMeetService;
   private final NotificationService notificationService;
 
+  @Value("${nutricontrol.appointments.price}")
+  private Integer appointmentPrice;
+
   @Value("${paypal.return-url}")
   private String returnUrl;
 
@@ -71,7 +74,7 @@ public class PaymentServiceImpl implements PaymentService {
         appointmentRepository
             .findById(paymentRequestDTO.appointmentId())
             .orElseThrow(() -> new NotFoundException("Appointment not found"));
-    BigDecimal amount = BigDecimal.valueOf(150);
+    BigDecimal amount = BigDecimal.valueOf(this.appointmentPrice);
 
     OrdersController ordersController = paypalClient.getOrdersController();
 
@@ -164,7 +167,9 @@ public class PaymentServiceImpl implements PaymentService {
 
     OffsetDateTime nowUtc = OffsetDateTime.now(ZoneOffset.UTC);
     if (appointment.getStartTimeUtc().isBefore(nowUtc.plusHours(24))) {
-      log.info("El turno (ID: {}) es en menos de 24hs. Capturando fondos inmediatamente.", appointment.getId());
+      log.info(
+          "El turno (ID: {}) es en menos de 24hs. Capturando fondos inmediatamente.",
+          appointment.getId());
       this.capturePaymentAsync(authorizationId, appointment.getId());
     }
 

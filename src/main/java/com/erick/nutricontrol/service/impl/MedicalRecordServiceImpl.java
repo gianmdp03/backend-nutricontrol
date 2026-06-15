@@ -37,7 +37,7 @@ public class MedicalRecordServiceImpl implements MedicalRecordService {
     } else {
       recordToSave =
           new MedicalRecord(
-              dto.weight(), dto.height(), dto.medicalHistory(), dto.medication(), user);
+              dto.age(), dto.weight(), dto.height(), dto.medicalHistory(), dto.medication(), user);
     }
 
     recordToSave = repository.save(recordToSave);

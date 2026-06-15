@@ -1,6 +1,7 @@
 package com.erick.nutricontrol.service.impl;
 
 import com.erick.nutricontrol._enum.AppointmentStatus;
+import com.erick.nutricontrol._enum.PaymentStatus;
 import com.erick.nutricontrol.dto.appointment.AppointmentDetailDTO;
 import com.erick.nutricontrol.dto.appointment.AppointmentRequestDTO;
 import com.erick.nutricontrol.dto.appointment.AvailableSlotDTO;
@@ -20,11 +21,10 @@ import com.erick.nutricontrol.repository.ScheduleRuleRepository;
 import com.erick.nutricontrol.security.user.Enum.Role;
 import com.erick.nutricontrol.security.user.model.User;
 import com.erick.nutricontrol.security.user.repository.UserRepository;
-import com.erick.nutricontrol.service.AppointmentService;
-import com.erick.nutricontrol.service.NotificationService;
-import com.erick.nutricontrol.service.PaymentService;
+import com.erick.nutricontrol.service.*;
 import com.paypal.sdk.exceptions.ApiException;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.*;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -46,6 +46,8 @@ public class AppointmentServiceImpl implements AppointmentService {
   private final UserRepository userRepository;
   private final NotificationService notificationService;
   private final PaymentService paymentService;
+  private final GoogleMeetService googleMeetService;
+  private final EmailService emailService;
 
   @Value("${nutricontrol.appointments.days}")
   private Integer days;
@@ -55,6 +57,68 @@ public class AppointmentServiceImpl implements AppointmentService {
 
   @Value("${nutricontrol.appointments.duration-minutes}")
   private Integer durationMinutes;
+
+  @Override
+  @Transactional
+  public AppointmentDetailDTO createManualPaidAppointment(
+      User admin, Long patientId, AppointmentRequestDTO dto) {
+    User patient =
+        userRepository
+            .findById(patientId)
+            .orElseThrow(() -> new NotFoundException("Paciente no encontrado"));
+
+    ZoneId doctorZone =
+        ZoneId.of(admin.getTimezone() != null ? admin.getTimezone() : "America/Santo_Domingo");
+    ZonedDateTime zdtStart = dto.startTime().atZoneSameInstant(doctorZone);
+
+    LocalDate doctorDate = zdtStart.toLocalDate();
+    LocalTime doctorStartTime = zdtStart.toLocalTime();
+    LocalTime doctorEndTime = doctorStartTime.plusMinutes(this.durationMinutes);
+
+    Appointment appointment = mapper.toEntity(dto);
+    appointment.setDate(doctorDate);
+    appointment.setStartTime(doctorStartTime);
+    appointment.setEndTime(doctorEndTime);
+    appointment.setUser(patient);
+    appointment.setAdmin(admin);
+    appointment.setAppointmentStatus(AppointmentStatus.CONFIRMED);
+    appointment.setStartTimeUtc(dto.startTime());
+    appointment.setEndTimeUtc(dto.startTime().plusMinutes(this.durationMinutes));
+
+    BigDecimal amount = BigDecimal.valueOf(150);
+    Payment payment =
+        Payment.builder()
+            .appointment(appointment)
+            .amount(amount)
+            .currency("USD")
+            .status(PaymentStatus.CAPTURED)
+            .paypalOrderId("MANUAL_CASH_" + System.currentTimeMillis())
+            .build();
+
+    appointment.getPayments().add(payment);
+
+    String meetLink = googleMeetService.createMeetLink(appointment);
+    if (meetLink != null) {
+      appointment.setMeetingLink(meetLink);
+    }
+    appointment = repository.save(appointment);
+
+    String patientName = patient.getName();
+    String patientEmail = patient.getEmail();
+    String appointmentDateStr = appointment.getDate().toString();
+    String appointmentTimeStr = appointment.getStartTime().toString();
+    String doctorName = admin.getName();
+
+    emailService.sendAppointmentReceiptAsync(
+        patientEmail,
+        patientName,
+        appointmentDateStr,
+        appointmentTimeStr,
+        doctorName,
+        appointment.getMeetingLink());
+
+    return mapper.toDetailDTO(appointment);
+  }
 
   @Override
   @Transactional
@@ -230,6 +294,45 @@ public class AppointmentServiceImpl implements AppointmentService {
       current = current.plusMinutes(gap);
     }
     return list;
+  }
+
+  @Override
+  @Transactional
+  public AppointmentDetailDTO forceConfirmPendingAppointment(Long id) {
+    Appointment appointment =
+        repository.findById(id).orElseThrow(() -> new NotFoundException("Turno no encontrado"));
+    if (appointment.getAppointmentStatus() != AppointmentStatus.PENDING) {
+      throw new BadRequestException("Solo se pueden forzar turnos que estén en estado PENDING.");
+    }
+
+    appointment.setAppointmentStatus(AppointmentStatus.CONFIRMED);
+
+    appointment.getPayments().stream()
+        .filter(p -> p.getStatus() == PaymentStatus.PENDING)
+        .forEach(p -> p.setStatus(PaymentStatus.CAPTURED));
+
+    String meetLink = googleMeetService.createMeetLink(appointment);
+    if (meetLink != null) {
+      appointment.setMeetingLink(meetLink);
+    }
+
+    appointment = repository.save(appointment);
+
+    String patientName = appointment.getUser().getName();
+    String patientEmail = appointment.getUser().getEmail();
+    String appointmentDate = appointment.getDate().toString();
+    String appointmentTime = appointment.getStartTime().toString();
+    String doctorName = appointment.getAdmin().getName();
+
+    emailService.sendAppointmentReceiptAsync(
+        patientEmail,
+        patientName,
+        appointmentDate,
+        appointmentTime,
+        doctorName,
+        appointment.getMeetingLink());
+
+    return mapper.toDetailDTO(appointment);
   }
 
   @Override

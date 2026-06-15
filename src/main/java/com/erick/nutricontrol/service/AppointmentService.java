@@ -12,6 +12,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 public interface AppointmentService {
+  AppointmentDetailDTO createManualPaidAppointment(
+      User admin, Long patientId, AppointmentRequestDTO dto);
+
+  AppointmentDetailDTO forceConfirmPendingAppointment(Long id);
+
   PaymentOrderResponseDTO addAppointment(User user, AppointmentRequestDTO dto)
       throws IOException, ApiException;
 

@@ -2,12 +2,11 @@ package com.erick.nutricontrol.model;
 
 import com.erick.nutricontrol.security.user.model.User;
 import jakarta.persistence.*;
+import java.time.OffsetDateTime;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.UpdateTimestamp;
-
-import java.time.OffsetDateTime;
 
 @Entity
 @Getter
@@ -18,6 +17,9 @@ public class MedicalRecord {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
+
+  @Column(nullable = false, length = 3)
+  private String age;
 
   @Column(nullable = false)
   private Double weight;
@@ -39,8 +41,9 @@ public class MedicalRecord {
   @Column(nullable = false)
   private OffsetDateTime lastUpdateDate;
 
-  public MedicalRecord(
+  public MedicalRecord(String age,
       Double weight, Double height, String medicalHistory, String medication, User user) {
+    this.age = age;
     this.weight = weight;
     this.height = height;
     this.medicalHistory = medicalHistory;
