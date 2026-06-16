@@ -16,4 +16,5 @@ public record AppointmentDetailDTO(
     UserDetailDTO user,
     AppointmentStatus appointmentStatus,
     AppointmentType appointmentType,
-    String meetingLink) {}
+    String meetingLink,
+    Boolean hasReviewed) {}

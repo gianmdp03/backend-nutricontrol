@@ -389,6 +389,11 @@ public class AppointmentServiceImpl implements AppointmentService {
       throw new BadRequestException("Solo se pueden iniciar turnos que estén CONFIRMED.");
     }
 
+    OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
+    if (appointment.getStartTimeUtc().isAfter(now.plusHours(24))) {
+      throw new BadRequestException("No se puede iniciar un turno programado para más adelante (falta más de 24 horas).");
+    }
+
     appointment.setAppointmentStatus(AppointmentStatus.IN_PROGRESS);
     appointment = repository.save(appointment);
     return mapper.toDetailDTO(appointment);

@@ -10,4 +10,5 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface ReviewRepository extends JpaRepository<Review, Long> {
     Page<Review> findByAdmin(User admin, Pageable pageable);
+    boolean existsByAppointmentId(Long appointmentId);
 }
