@@ -13,6 +13,12 @@ import com.erick.nutricontrol.security.user.repository.UserRepository;
 import com.erick.nutricontrol.security.user.service.AuthenticationService;
 import com.erick.nutricontrol.security.user.service.JwtService;
 import com.erick.nutricontrol.service.EmailService;
+import java.security.SecureRandom;
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -22,11 +28,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.security.SecureRandom;
-import java.time.LocalDateTime;
-import java.util.Optional;
-import java.util.UUID;
 
 @Service
 @Transactional(readOnly = true)
@@ -57,7 +58,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             request.lastname(),
             Role.ROLE_PATIENT,
             request.username(),
-        request.timezone());
+            request.timezone());
     userRepository.save(user);
     String jwtToken = jwtService.generateToken(user);
     UserDetailDTO userDetail =
@@ -78,10 +79,11 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
   @Override
   public AuthenticationResponseDTO authenticate(AuthenticationRequestDTO request) {
-      Authentication auth = authenticationManager.authenticate(
-              new UsernamePasswordAuthenticationToken(request.loginInput(), request.password()));
-      User user = (User) auth.getPrincipal();
-      String jwtToken = jwtService.generateToken(user);
+    Authentication auth =
+        authenticationManager.authenticate(
+            new UsernamePasswordAuthenticationToken(request.loginInput(), request.password()));
+    User user = (User) auth.getPrincipal();
+    String jwtToken = jwtService.generateToken(user);
 
     UserDetailDTO userDetail =
         new UserDetailDTO(
@@ -91,7 +93,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             user.getEmail(),
             user.getUsername(),
             user.getRole().name(),
-                user.getTimezone(),
+            user.getTimezone(),
             user.isBanned(),
             user.isEmailConfirmed(),
             null);
@@ -101,23 +103,40 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
   @Override
   @Transactional
-  public AuthenticationResponseDTO oauthSignIn(OAuthRequestDTO request){
-    User user = userRepository.findByEmail(request.email()).orElseGet(()->{
-      String baseUsername = request.email().split("@")[0];
-      String uniqueUsername = baseUsername + "_" + UUID.randomUUID().toString().substring(0, 8);
-      User newUser = User.builder()
-              .name(request.name())
-              .lastname(request.lastname())
-              .username(uniqueUsername)
-              .email(request.email())
-              .password(passwordEncoder.encode(UUID.randomUUID().toString()))
-              .role(Role.ROLE_PATIENT)
-              .build();
+  public AuthenticationResponseDTO oauthSignIn(OAuthRequestDTO request) {
+    User user =
+        userRepository
+            .findByEmail(request.email())
+            .orElseGet(
+                () -> {
+                  String baseUsername = request.email().split("@")[0];
+                  String uniqueUsername =
+                      baseUsername + "_" + UUID.randomUUID().toString().substring(0, 8);
+                  User newUser =
+                      User.builder()
+                          .name(request.name())
+                          .lastname(request.lastname())
+                          .username(uniqueUsername)
+                          .email(request.email())
+                          .password(passwordEncoder.encode(UUID.randomUUID().toString()))
+                          .role(Role.ROLE_PATIENT)
+                          .build();
 
-      return userRepository.save(newUser);
-    });
+                  return userRepository.save(newUser);
+                });
     String jwtToken = jwtService.generateToken(user);
-    UserDetailDTO userDetailDTO = new UserDetailDTO(user.getId(), user.getName(), user.getLastname(), user.getEmail(), user.getUsername(), user.getRole().name(), user.getTimezone(), user.isBanned(), user.isEmailConfirmed(), user.getProfilePicture());
+    UserDetailDTO userDetailDTO =
+        new UserDetailDTO(
+            user.getId(),
+            user.getName(),
+            user.getLastname(),
+            user.getEmail(),
+            user.getUsername(),
+            user.getRole().name(),
+            user.getTimezone(),
+            user.isBanned(),
+            user.isEmailConfirmed(),
+            user.getProfilePicture());
     return new AuthenticationResponseDTO(jwtToken, userDetailDTO);
   }
 
@@ -129,19 +148,21 @@ public class AuthenticationServiceImpl implements AuthenticationService {
       User user = existingUser.get();
       SecureRandom secureRandom = new SecureRandom();
       String token = String.valueOf(100000 + secureRandom.nextInt(999999));
+
       user.setSecurityToken(token);
       user.setTokenExpirationTime(LocalDateTime.now().plusMinutes(20));
-      String body =
-          "Estimado usuario "
-              + user.getName()
-              + " "
-              + user.getLastname()
-              + "\n\n"
-              + "Aquí tiene el código de verificación para cambiar su contraseña: "
-              + user.getSecurityToken()
-              + "\n\n"
-              + "El mismo estará disponible por 20 minutos";
-      emailService.sendEmail(email, "Cambiar contraseña", body);
+
+      Map<String, Object> variables = new HashMap<>();
+      variables.put("name", user.getName());
+      variables.put("lastname", user.getLastname());
+      variables.put("token", token);
+      variables.put("expirationTime", 20);
+
+      emailService.sendHtmlTemplateEmail(
+          email,
+          "Tu Médico RD - Restablecimiento de contraseña",
+          "forgotPasswordTemplate",
+          variables);
     }
   }
 
@@ -224,7 +245,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 user.getEmail(),
                 user.getUsername(),
                 user.getRole().name(),
-                    user.getTimezone(),
+                user.getTimezone(),
                 user.isBanned(),
                 user.isEmailConfirmed(),
                 user.getProfilePicture()));
@@ -245,29 +266,31 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 user.getEmail(),
                 user.getUsername(),
                 user.getRole().name(),
-                    user.getTimezone(),
+                user.getTimezone(),
                 user.isBanned(),
                 user.isEmailConfirmed(),
                 user.getProfilePicture()));
   }
 
   @Override
-  public Page<UserDetailDTO> listAdmins(Pageable pageable){
-      Page<User> page = userRepository.findByRoleAndIsBannedFalse(Role.ROLE_ADMIN, pageable);
-      if(page.isEmpty()) {
-          return Page.empty();
-      }
-      return page.map(user -> new UserDetailDTO(
-              user.getId(),
-              user.getName(),
-              user.getLastname(),
-              user.getEmail(),
-              user.getUsername(),
-              user.getRole().name(),
-              user.getTimezone(),
-              user.isBanned(),
-              user.isEmailConfirmed(),
-              user.getProfilePicture()));
+  public Page<UserDetailDTO> listAdmins(Pageable pageable) {
+    Page<User> page = userRepository.findByRoleAndIsBannedFalse(Role.ROLE_ADMIN, pageable);
+    if (page.isEmpty()) {
+      return Page.empty();
+    }
+    return page.map(
+        user ->
+            new UserDetailDTO(
+                user.getId(),
+                user.getName(),
+                user.getLastname(),
+                user.getEmail(),
+                user.getUsername(),
+                user.getRole().name(),
+                user.getTimezone(),
+                user.isBanned(),
+                user.isEmailConfirmed(),
+                user.getProfilePicture()));
   }
 
   @Override
@@ -285,7 +308,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 user.getEmail(),
                 user.getUsername(),
                 user.getRole().name(),
-                    user.getTimezone(),
+                user.getTimezone(),
                 user.isBanned(),
                 user.isEmailConfirmed(),
                 user.getProfilePicture()));
@@ -306,7 +329,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 user.getEmail(),
                 user.getUsername(),
                 user.getRole().name(),
-                    user.getTimezone(),
+                user.getTimezone(),
                 user.isBanned(),
                 user.isEmailConfirmed(),
                 user.getProfilePicture()));
@@ -327,7 +350,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 user.getEmail(),
                 user.getUsername(),
                 user.getRole().name(),
-                    user.getTimezone(),
+                user.getTimezone(),
                 user.isBanned(),
                 user.isEmailConfirmed(),
                 user.getProfilePicture()));
@@ -346,7 +369,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         user.getEmail(),
         user.getUsername(),
         user.getRole().name(),
-            user.getTimezone(),
+        user.getTimezone(),
         user.isBanned(),
         user.isEmailConfirmed(),
         user.getProfilePicture());
@@ -382,16 +405,19 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         user.getEmail(),
         user.getUsername(),
         user.getRole().name(),
-            user.getTimezone(),
+        user.getTimezone(),
         user.isBanned(),
         user.isEmailConfirmed(),
         user.getProfilePicture());
   }
 
   @Override
-    @Transactional
-    public void updateProfilePicture(String username, UserProfilePictureDTO dto){
-      User user = userRepository.findByUsername(username).orElseThrow(() -> new NotFoundException("Username does not exist"));
-      user.setProfilePicture(dto.profilePicture());
+  @Transactional
+  public void updateProfilePicture(String username, UserProfilePictureDTO dto) {
+    User user =
+        userRepository
+            .findByUsername(username)
+            .orElseThrow(() -> new NotFoundException("Username does not exist"));
+    user.setProfilePicture(dto.profilePicture());
   }
 }

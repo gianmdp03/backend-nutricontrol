@@ -7,4 +7,4 @@ import jakarta.validation.constraints.Size;
 public record AuthenticationPasswordDTO(
     @NotBlank @Email @Size(max = 100) String email,
     @Size(min = 6, max = 64) String password,
-    @Size(max = 10) String token) {}
+    @Size(max = 1000) String token) {}

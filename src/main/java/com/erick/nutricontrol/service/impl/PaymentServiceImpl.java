@@ -52,7 +52,7 @@ public class PaymentServiceImpl implements PaymentService {
   private final NotificationService notificationService;
 
   @Value("${nutricontrol.appointments.price}")
-  private Integer appointmentPrice;
+  private Double appointmentPrice;
 
   @Value("${paypal.return-url}")
   private String returnUrl;
