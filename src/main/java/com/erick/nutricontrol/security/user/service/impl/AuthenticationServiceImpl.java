@@ -420,4 +420,32 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             .orElseThrow(() -> new NotFoundException("Username does not exist"));
     user.setProfilePicture(dto.profilePicture());
   }
+
+  @Override
+  public String getMaskedEmailByUsername(String username) {
+    User user =
+        userRepository
+            .findByUsername(username)
+            .orElseThrow(() -> new NotFoundException("Username does not exist"));
+
+    String email = user.getEmail();
+    int atIndex = email.indexOf("@");
+
+    // Si la parte local es muy corta (ej: ab@gmail.com), no la procesamos para evitar errores
+    if (atIndex <= 2) return email;
+
+    String localPart = email.substring(0, atIndex);
+    String domainPart = email.substring(atIndex);
+
+    // Si tiene 4 caracteres o menos (ej: pepe@gmail.com -> p***@gmail.com)
+    if (localPart.length() <= 4) {
+      return localPart.charAt(0) + "***" + domainPart;
+    }
+
+    // Enmascarado "menos violento": mostramos 3 letras al inicio y 1 al final
+    String maskedLocal =
+        localPart.substring(0, 3) + "***" + localPart.substring(localPart.length() - 1);
+
+    return maskedLocal + domainPart;
+  }
 }

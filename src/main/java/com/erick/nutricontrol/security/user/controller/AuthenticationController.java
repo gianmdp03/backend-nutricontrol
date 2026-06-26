@@ -13,9 +13,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -154,5 +152,11 @@ public class AuthenticationController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
         return ResponseEntity.ok(authenticationService.getUserByEmail(authentication.getName()));
+    }
+
+    @GetMapping("/forgot-email/{username}")
+    public ResponseEntity<String> forgotEmail(@PathVariable String username){
+        String maskedEmail = authenticationService.getMaskedEmailByUsername(username);
+        return ResponseEntity.status(HttpStatus.OK).body(maskedEmail);
     }
 }
