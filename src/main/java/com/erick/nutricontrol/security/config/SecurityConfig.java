@@ -91,8 +91,7 @@ public class SecurityConfig {
             "http://localhost:4200",
             "http://localhost:50093",
             "http://localhost:3000",
-            "http://26.117.165.31:3000",
-            "http://190.191.214.105:3000"));
+            "https://tumedicord.vercel.app"));
     configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
     configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
 
